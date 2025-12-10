@@ -1,0 +1,8 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <app-project-card
+        *ngFor="let p of projects"
+        [project]="p"
+        (edit)="editProject.emit($event)"
+        (delete)="deleteProject.emit($event)">
+    </app-project-card>
+</div>

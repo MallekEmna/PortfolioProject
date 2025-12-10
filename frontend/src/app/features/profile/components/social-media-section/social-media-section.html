@@ -1,0 +1,86 @@
+<div class="w-full bg-white rounded-xl shadow-2xl p-6 mt-10">
+
+    <div class="mb-6 border-b pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Social Media</h1>
+            <p class="text-gray-600">Manage your public profiles</p>
+        </div>
+
+        @if (!editMode) {
+        <button (click)="enableEdit()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+            Edit
+        </button>
+        }
+    </div>
+
+    <!-- View Mode -->
+    @if (!editMode) {
+    <div class="space-y-3">
+        @if (user?.socialLinks?.linkedin) {
+        <div class="flex items-center gap-2">
+            <lucide-icon name="linkedin"></lucide-icon>
+            <a class="text-blue-600 underline" target="_blank">{{ user?.socialLinks?.linkedin }}</a>
+        </div>
+        }
+        @if (user?.socialLinks?.github) {
+        <div class="flex items-center gap-2">
+            <lucide-icon name="github"></lucide-icon>
+            <a class="text-gray-700 underline" target="_blank">{{ user?.socialLinks?.github }}</a>
+        </div>
+        }
+        @if (user?.socialLinks?.facebook) {
+        <div class="flex items-center gap-2">
+            <lucide-icon name="facebook"></lucide-icon>
+            <a class="text-blue-700 underline" target="_blank">{{ user?.socialLinks?.facebook }}</a>
+        </div>
+        }
+        @if (user?.socialLinks?.instagram) {
+        <div class="flex items-center gap-2">
+            <lucide-icon name="instagram"></lucide-icon>
+            <a class="text-pink-600 underline" target="_blank">{{ user?.socialLinks?.instagram }}</a>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- Edit Mode -->
+    @if (editMode) {
+    <div class="space-y-4">
+
+        <div>
+            <label class="text-sm font-medium">LinkedIn</label>
+            <input [(ngModel)]="tempLinks.linkedin"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label class="text-sm font-medium">GitHub</label>
+            <input [(ngModel)]="tempLinks.github"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label class="text-sm font-medium">Facebook</label>
+            <input [(ngModel)]="tempLinks.facebook"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label class="text-sm font-medium">Instagram</label>
+            <input [(ngModel)]="tempLinks.instagram"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Save / Cancel -->
+        <div class="flex gap-3 mt-6 justify-end">
+            <button (click)="save()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Save
+            </button>
+            <button (click)="cancel()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                Cancel
+            </button>
+        </div>
+    </div>
+    }
+
+</div>

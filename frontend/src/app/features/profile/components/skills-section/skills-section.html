@@ -1,0 +1,66 @@
+<div class="w-full bg-white rounded-xl shadow-2xl p-6 mt-10">
+
+    <div class="mb-6 border-b pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Skills</h1>
+            <p class="text-gray-600">Manage your professional skills</p>
+        </div>
+
+        @if (!editMode()) {
+        <button (click)="enableEdit()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+            Edit
+        </button>
+        }
+    </div>
+
+    <!-- View Mode -->
+    @if (!editMode()) {
+    <div class="flex flex-wrap gap-2">
+        @for (skill of user?.skills || []; track skill) {
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">
+            {{ skill }}
+        </span>
+        }
+    </div>
+    }
+
+    <!-- Edit Mode -->
+    @if (editMode()) {
+    <div class="space-y-4">
+
+        <!-- Input new skill -->
+        <div class="flex gap-2">
+            <input [(ngModel)]="newSkill" class="flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                placeholder="Add new skill...">
+
+            <button (click)="addSkill()" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Add
+            </button>
+        </div>
+
+        <!-- List editable skills -->
+        <div class="flex flex-wrap gap-2">
+            @for (skill of tempSkills(); let i = $index; track i) {
+            <div class="flex items-center gap-2 px-3 py-1 bg-gray-200 rounded-md">
+                <span>{{ skill }}</span>
+                <button (click)="removeSkill(i)">
+                    <lucide-icon name="x" size="14" class="text-red-500"></lucide-icon>
+                </button>
+            </div>
+            }
+        </div>
+
+        <!-- Save / Cancel -->
+        <div class="flex gap-3 mt-6 justify-end">
+            <button (click)="save()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Save
+            </button>
+            <button (click)="cancel()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                Cancel
+            </button>
+        </div>
+
+    </div>
+    }
+
+</div>

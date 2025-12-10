@@ -1,0 +1,76 @@
+<!-- Sidebar (standalone component used inside layouts) -->
+<div class="w-64 bg-slate-800 text-white flex flex-col p-4 sticky top-0 h-screen overflow-y-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-8">
+        <div class="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold text-lg">
+            P.P
+        </div>
+        <span class="font-semibold text-lg">Profile.Porfolio</span>
+    </div>
+
+<!-- Profile Picture -->
+<div class="flex flex-col items-center mb-8">
+    <div class="w-24 h-24 bg-slate-600 rounded-full flex items-center justify-center mb-3 overflow-hidden">
+        @if (user?.profileImage && !imageError) {
+        <img [src]="profileImageUrl" 
+             alt="Profile" 
+             class="w-full h-full object-cover"
+             (error)="handleImageError($event)"
+             (load)="imageLoadedSuccessfully()">
+        } @else {
+        <div class="w-full h-full bg-slate-700 flex items-center justify-center">
+            <lucide-icon name="user" [size]="40" class="text-slate-400" host="profile-sidebar-user"></lucide-icon>
+        </div>
+        }
+    </div>
+    <span class="text-sm text-slate-300">Profile Picture</span>
+    <div class="mt-2 text-center">
+        <div class="text-sm font-medium">{{ user?.username ?? 'Guest' }}</div>
+        <div class="text-xs text-slate-400">{{ user?.email ?? '' }}</div>
+    </div>
+</div>
+
+    <!-- Menu -->
+    <nav class="flex-1 space-y-2">
+        <a routerLink="/profile" routerLinkActive="bg-slate-700 text-white" [routerLinkActiveOptions]="{ exact: true }"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-600">
+            <lucide-icon name="user" [size]="18" host="profile-menu-user"></lucide-icon>
+            <span>Profile</span>
+        </a>
+
+        <a routerLink="/projects" routerLinkActive="bg-blue-600 text-white" [routerLinkActiveOptions]="{ exact: true }"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-600">
+            <lucide-icon name="edit" [size]="18" host="profile-menu-edit"></lucide-icon>
+            <span>Projects</span>
+        </a>
+
+        <button
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors justify-between">
+            <div class="flex items-center gap-3">
+                <lucide-icon name="file-text" [size]="18" host="profile-menu-cv"></lucide-icon>
+                <span>Genere un CV</span>
+            </div>
+            <span class="text-xs">›</span>
+        </button>
+
+        <a routerLink="/templates" routerLinkActive="bg-amber-600 text-white"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-600">
+            <lucide-icon name="file-text" [size]="18" host="profile-menu-templates"></lucide-icon>
+            <span>Templates</span>
+        </a>
+
+        <a routerLink="/cv-upload" routerLinkActive="bg-slate-700 text-white"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-600">
+            <lucide-icon name="upload" [size]="18" host="profile-menu-upload"></lucide-icon>
+            <span>Upload CV</span>
+        </a>
+
+        <button class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+            <lucide-icon name="settings" [size]="18" host="profile-menu-settings"></lucide-icon>
+            <span>Settings</span>
+        </button>
+    </nav>
+</div>
+<!-- NOTE: Removed page wrapper so this component renders only the sidebar box.
+            The parent layout (pages) provides the surrounding layout and spacing. -->

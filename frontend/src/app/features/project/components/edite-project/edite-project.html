@@ -1,0 +1,108 @@
+<div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto border border-gray-200 p-6 relative">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-indigo-500 font-semibold">Project</p>
+                <h2 class="text-xl font-semibold text-gray-900">Edit Project</h2>
+            </div>
+            <button (click)="close.emit()" class="text-gray-500 hover:text-gray-800 text-xl">
+                ✕
+            </button>
+        </div>
+
+        <form (ngSubmit)="submit()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- COMPANY NAME -->
+            <div class="md:col-span-1">
+                <label class="text-sm font-medium text-gray-700">Company</label>
+                <input [(ngModel)]="editedProject.companyName" name="companyName" placeholder="Company name"
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+            </div>
+
+            <!-- DURATION -->
+            <div class="md:col-span-1">
+                <label class="text-sm font-medium text-gray-700">Duration</label>
+                <input [(ngModel)]="editedProject.duration" name="duration" placeholder="e.g. Jan 2023 - Apr 2023"
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="md:col-span-1">
+                <label class="text-sm font-medium text-gray-700">Category</label>
+                <input [(ngModel)]="editedProject.category" name="category" placeholder="Web / Mobile / Personal..."
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+            </div>
+
+            <!-- STATUS -->
+            <div class="md:col-span-1">
+                <label class="text-sm font-medium text-gray-700">Status</label>
+                <select [(ngModel)]="editedProject.status" name="status" class="w-full border p-2 rounded-lg mb-0 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <option value="">-- Select status --</option>
+                    <option value="Active">Active</option>
+                    <option value="Complete">Complete</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+
+            <!-- TITLE -->
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-700">Title</label>
+                <input [(ngModel)]="editedProject.title" name="title" placeholder="Project title"
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-700">Description</label>
+                <textarea [(ngModel)]="editedProject.description" name="description" placeholder="Short description"
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></textarea>
+            </div>
+
+            <!-- TECH STACK (comma separated) -->
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-700">Tech Stack (comma separated)</label>
+                <input [(ngModel)]="techStackInput" name="techStackInput" placeholder="Angular, TypeScript, Tailwind"
+                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+            </div>
+
+            <!-- IMAGE UPLOAD -->
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-700">Project Image</label>
+                <div class="mb-3">
+                    <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full border p-2 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <div *ngIf="selectedImagePreview || editedProject.image">
+                        <div class="mt-2">
+                            <img [src]="selectedImagePreview || getImageUrl(editedProject.image)" 
+                                 (error)="onImageError($event)"
+                                 class="w-full h-40 object-cover rounded-xl border" 
+                                 alt="Project image">
+                            <button type="button" (click)="removeImage()" class="text-red-500 text-sm mt-1 hover:underline">Remove image</button>
+                        </div>
+                    </div>
+                    <div *ngIf="!selectedImagePreview && !editedProject.image" class="mt-2 text-gray-500 text-sm">
+                        No image selected
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEMO / GITHUB LINKS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:col-span-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Demo URL</label>
+                    <input [(ngModel)]="editedProject.linkDemo" name="linkDemo" placeholder="https://demo.example"
+                        class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Github URL</label>
+                    <input [(ngModel)]="editedProject.linkGithub" name="linkGithub" placeholder="https://github.com/.."
+                        class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" />
+                </div>
+            </div>
+
+            <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+                <button type="button" (click)="close.emit()"
+                    class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-lg shadow">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>

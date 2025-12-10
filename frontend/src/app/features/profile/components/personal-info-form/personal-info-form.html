@@ -1,0 +1,103 @@
+<div class="w-full bg-white rounded-xl shadow-2xl p-6 mt-10">
+
+    <!-- Header -->
+    <div class="mb-6 border-b pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">User Profile</h1>
+            <h2 class="text-lg text-gray-600 mt-1">Personal Information</h2>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-wrap items-center gap-3 md:gap-2">
+            <!-- Input file caché pour l'upload -->
+            <input type="file" #fileInput (change)="onUploadPhoto($event)" accept="image/*" style="display: none;">
+            
+            <button (click)="fileInput.click()"
+                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2">
+                <lucide-icon name="upload" [size]="16"></lucide-icon>
+                Upload Photo
+            </button>
+            <button (click)="removePhoto()"
+                class="px-4 py-2 text-teal-500 hover:bg-teal-50 rounded-md transition-colors flex items-center gap-2">
+                <lucide-icon name="x" [size]="16"></lucide-icon>
+                Remove
+            </button>
+            @if (!editMode()) {
+            <button (click)="enableEdit()"
+                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+                Edit
+            </button>
+            }
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- First Name -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+            @if (!editMode()) {
+            <div class="py-2 px-3 border rounded-md bg-gray-100 text-gray-800 cursor-text select-text">
+                {{ user?.username || 'N/A' }}
+            </div>
+            } @else {
+            <input [ngModel]="tempUser()?.username" (ngModelChange)="onUsernameChange($event)" type="text"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            }
+        </div>
+
+        <!-- Last Name -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+            @if (!editMode()) {
+            <div class="py-2 px-3 border rounded-md bg-gray-100 text-gray-800 cursor-text select-text">
+                {{ user?.lastName || 'N/A' }}
+            </div>
+            } @else {
+            <input [ngModel]="tempUser()?.lastName" (ngModelChange)="onLastNameChange($event)" type="text"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            }
+        </div>
+
+        <!-- Phone -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            @if (!editMode()) {
+            <div class="py-2 px-3 border rounded-md bg-gray-100 text-gray-800 cursor-text select-text">
+                {{ user?.phone || 'N/A' }}
+            </div>
+            } @else {
+            <input [ngModel]="tempUser()?.phone" (ngModelChange)="onPhoneChange($event)" type="text"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            }
+        </div>
+
+        <!-- Location -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            @if (!editMode()) {
+            <div class="py-2 px-3 border rounded-md bg-gray-100 text-gray-800 cursor-text select-text">
+                {{ user?.location || 'N/A' }}
+            </div>
+            } @else {
+            <input [ngModel]="tempUser()?.location" (ngModelChange)="onLocationChange($event)" type="text"
+                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            }
+        </div>
+
+    </div>
+
+    <!-- Save / Cancel buttons -->
+    @if (editMode()) {
+    <div class="flex gap-3 mt-6 justify-end">
+        <button (click)="save()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+            Save Changes
+        </button>
+        <button (click)="cancel()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+            Cancel
+        </button>
+    </div>
+    }
+
+</div>

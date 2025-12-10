@@ -1,0 +1,16 @@
+<div class="min-h-screen flex gap-6 bg-gradient-to-br from-gray-50 to-gray-100">
+
+    <app-profile-sidebar [user]="user()" class="w-64 flex-shrink-0">
+    </app-profile-sidebar>
+
+    <div class="flex-1 space-y-6 overflow-y-auto p-6">
+
+        <app-personal-info-form [user]="user()"></app-personal-info-form>
+
+        <app-skills-section [user]="user()"></app-skills-section>
+
+        <app-social-media-section [user]="user()"></app-social-media-section>
+
+    </div>
+
+</div>

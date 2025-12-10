@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wide text-indigo-500 font-semibold">CV Parser</p>
+        <h1 class="text-2xl font-bold text-gray-800">Upload your CV</h1>
+        <p class="text-gray-500 text-sm">We will auto-fill the form from your PDF.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="file" accept="application/pdf" (change)="onFileChange($event)" class="hidden" #fileInput>
+        <button type="button" (click)="fileInput.click()"
+                class="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow hover:bg-indigo-600">
+          Choose PDF
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{{ errorMsg }}</div>
+    <div *ngIf="isLoading" class="p-3 rounded-lg bg-indigo-50 text-indigo-700 text-sm flex items-center gap-2">
+      <span class="animate-spin inline-block w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></span>
+      Parsing your CV...
+    </div>
+
+    <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Full name *</label>
+        <input formControlName="full_name" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+        <p *ngIf="f['full_name'].touched && f['full_name'].invalid" class="text-xs text-red-600">Name is required (min 3 chars).</p>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Email *</label>
+        <input formControlName="email" type="email" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+        <p *ngIf="f['email'].touched && f['email'].invalid" class="text-xs text-red-600">Valid email required.</p>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Phone</label>
+        <input formControlName="phone" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Address</label>
+        <input formControlName="address" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">LinkedIn</label>
+        <input formControlName="linkedin" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">GitHub</label>
+        <input formControlName="github" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="space-y-1 md:col-span-2">
+        <label class="text-sm font-medium text-gray-700">Title *</label>
+        <input formControlName="title" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+        <p *ngIf="f['title'].touched && f['title'].invalid" class="text-xs text-red-600">Title is required.</p>
+      </div>
+
+      <div class="space-y-1 md:col-span-2">
+        <label class="text-sm font-medium text-gray-700">Summary</label>
+        <textarea formControlName="summary" rows="3"
+                  class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></textarea>
+      </div>
+
+      <div class="space-y-1 md:col-span-2">
+        <label class="text-sm font-medium text-gray-700">Technical skills (comma separated)</label>
+        <input formControlName="skillsTechnical" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="space-y-1 md:col-span-2">
+        <label class="text-sm font-medium text-gray-700">Soft skills (comma separated)</label>
+        <input formControlName="skillsSoft" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+      </div>
+
+      <div class="md:col-span-2 flex gap-3">
+        <button type="button" (click)="submit()" [disabled]="isLoading"
+                class="px-5 py-2 bg-indigo-500 text-white rounded-lg shadow hover:bg-indigo-600 disabled:opacity-60">
+          Parse from PDF
+        </button>
+        <button type="button" (click)="save()" class="px-5 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-gray-800">
+          Save
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="parsedData" class="text-xs text-gray-500">
+      Parsed JSON (debug): <pre class="bg-gray-50 p-3 rounded">{{ parsedData | json }}</pre>
+    </div>
+  </div>
+</div>
+

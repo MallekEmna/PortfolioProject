@@ -1,0 +1,120 @@
+.project-card-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.project-card {
+  @apply bg-white rounded-xl shadow-lg overflow-hidden relative flex flex-col;
+  height: 340px; /* Hauteur moyenne pour toutes les cartes */
+  
+  .card-image {
+    @apply w-full h-32 object-cover;
+    flex-shrink: 0; /* Empêche l'image de se réduire */
+  }
+  
+  .card-content {
+    @apply p-4 flex-1 flex flex-col;
+    min-height: 0; /* Permet au contenu de s'adapter */
+    
+    .card-header {
+      @apply flex items-start justify-between mb-2;
+      flex-shrink: 0;
+      
+      .card-title {
+        @apply text-base font-semibold;
+        line-height: 1.3;
+        max-height: 2.6em; /* 2 lignes maximum */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+      
+      .status-badge {
+        @apply text-xs px-2 py-1 rounded-full;
+        flex-shrink: 0;
+        margin-left: 0.5rem;
+      }
+    }
+    
+    .card-description {
+      @apply text-gray-600 mb-2 text-sm;
+      flex: 1;
+      line-height: 1.4;
+      max-height: 4.2em; /* 3 lignes maximum */
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+    
+    .tech-stack {
+      @apply flex flex-wrap gap-1 mb-2;
+      flex-shrink: 0;
+      max-height: 50px; /* Limite la hauteur pour les tech stacks longues */
+      overflow: hidden;
+      
+      .tech-tag {
+        @apply px-1.5 py-0.5 bg-gray-200 rounded-full text-xs;
+        white-space: nowrap;
+      }
+    }
+    
+    .card-links {
+      @apply mt-auto flex gap-2;
+      flex-shrink: 0;
+      
+      .demo-link {
+        @apply text-blue-600 underline text-sm;
+      }
+      
+      .github-link {
+        @apply text-gray-800 underline text-sm;
+      }
+    }
+  }
+  
+  .card-actions {
+    @apply absolute top-2 right-2 flex gap-2;
+    z-index: 10;
+    
+    .edit-btn, .delete-btn {
+      @apply p-1 rounded transition-colors;
+    }
+    
+    .edit-btn {
+      @apply text-blue-600 hover:text-blue-800 hover:bg-blue-50;
+    }
+    
+    .delete-btn {
+      @apply text-red-500 hover:text-red-700 hover:bg-red-50;
+    }
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .project-card-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .project-card {
+    height: 340px; /* Plus compact sur mobile */
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  .project-card-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .project-card-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}

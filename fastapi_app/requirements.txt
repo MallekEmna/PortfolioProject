@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+pdfplumber
+Pillow
+python-multipart
+pytest
+pytest-asyncio
