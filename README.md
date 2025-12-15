@@ -1,134 +1,883 @@
-## Frontend Angular – Portfolio CV
+# 📚 Portfolio CV - Application Angular
 
-Application Angular (standalone components) pour gérer un profil, des projets, des templates de portfolio et l’upload de CV avec parsing via un backend FastAPI.
+Application Angular moderne (standalone components) pour gérer un profil, des projets, des templates de portfolio et l'upload de CV avec parsing via un backend FastAPI.
 
-### Démarrer le serveur de dev
+---
+
+## 🚀 Démarrage rapide
 
 ```bash
 cd frontend
+npm install
 ng serve
 ```
 
 Puis ouvrir `http://localhost:4200/`.
 
-### Mapping avec le barème du projet Angular
+---
 
-- **Test des fonctionnalités implémentées (4 pts)**  
-  - Écrans principaux :  
-    - `profile` : gestion des infos perso, skills et réseaux sociaux (`Profile`, `PersonalInfoForm`, `SkillsSection`, `SocialMediaSection`).  
-    - `projects` : CRUD projets + cartes et grille (`Projects`, `ProjectCard`, `AddProject`, `EditeProject`, `ProjectsGrid`, `ProjectsHeader`).  
-    - `templates` : choix et édition de template de portfolio (`TemplatesPage`, `TemplateEditor`).  
-    - `cv-upload` : upload de CV PDF, parsing (local / API externe / Ollama) et remplissage auto du formulaire (`CvUploadComponent`).  
-    - `portfolio` : affichage du portfolio généré (timeline, cartes projets, sidebar fixe) (`PortfolioViewerComponent`).  
-  - **Comment tester** : naviguer avec la sidebar (`ProfileSidebar`) ou directement via l’URL (`/profile`, `/projects`, `/templates`, `/cv-upload`, `/portfolio`), vérifier :  
-    - Création / édition / suppression d’un projet.  
-    - Modification des infos perso / skills / réseaux sociaux.  
-    - Upload d’un PDF dans `CV Upload`, parsing et remplissage auto du formulaire puis sauvegarde vers le backend.  
-    - Génération / régénération du portfolio après changement de template.
+## 📖 Table des matières
 
-- **Clarté de code (2 pts)**  
-  - Organisation en **features** (`features/profile`, `features/project`, `features/template`, `features/portfolio`, `features/cv-upload`) + **core/models** + **shared/pipes** + **services**.  
-  - Utilisation de **services partagés** (`UserService`, `ProjectService`, `TemplateService`, `PortfolioService`, `CvParserService`, etc.) et de **signals/computed** pour l’état utilisateur et les projets.  
-  - Nommage explicite des composants et méthodes (`addProject`, `loadProjects`, `regeneratePortfolio`, etc.).  
-  - Pour l’oral, tu peux expliquer la séparation **composants de présentation** (ex. `ProjectCard`) vs **composants “containers”** (ex. `Projects`).
+1. [Fondamentaux d'Angular](#fondamentaux-dangular)
+2. [Architecture du projet](#architecture-du-projet)
+3. [Notions clés expliquées](#notions-clés-expliquées)
+4. [Exemples de code du projet](#exemples-de-code-du-projet)
+5. [Mapping avec le barème](#mapping-avec-le-barème)
+6. [Questions typiques](#questions-typiques)
 
-- **Design (Tailwind + choix de couleurs + IHM) (3 pts)**  
-  - Tailwind activé dans `tailwind.config.js` (`darkMode: 'class'`) et utilisé dans les templates (`bg-white`, `rounded-xl`, `shadow-2xl`, `flex`, `grid`, `text-gray-700`, etc.).  
-  - Exemples :  
-    - `profile/profile.html` : layout avec sidebar fixe + contenu scrolable, cartes blanches avec ombre.  
-    - `project-card.html` : carte projet avec image, badge de statut coloré, tags de techno, boutons “Demo” / “Github”.  
-    - `portfolio-viewer.html` : timeline verticale, animations, sidebar cohérente avec le reste de l’app.  
-  - Tu peux parler de l’accessibilité de base (contraste, boutons clairement visibles, textes lisibles) et du choix d’une palette bleu/gris moderne.
+---
 
-- **Directives et pipes (prédéfinies et personnalisés) (3 pts)**  
-  - **Directives Angular prédéfinies** : `*ngIf`, `*ngFor`, `[ngClass]` dans `project-card.html`, `cv-upload.html`, `add-project.html`, `template-editor.html`, etc.  
-  - **Nouvelles directives de contrôle de flux Angular** : `@if`, `@for` utilisées dans `skills-section.html` et d’autres composants.  
-  - **Pipe personnalisés** (dans `shared/pipes`) :  
-    - `TruncatePipe` : tronquer les descriptions longues.  
-    - `StatusColorPipe` : retourner des classes Tailwind en fonction du statut d’un projet.  
-    - `TechListPipe` : concaténer un tableau de technos.  
-    - `ImageFallbackPipe` : fallback d’image via `ImageUrlService`.  
-  - **Directive personnalisée** : `HighlightOnHoverDirective` (`shared/directives/highlight-on-hover.directive.ts`), utilisée sur `project-card.html` avec l’attribut `appHighlightOnHover` pour ajouter un effet de survol custom.
+## 🎯 Fondamentaux d'Angular
 
-- **Composants Angular (Minimum 4 composants) (4 pts)**  
-  - Exemples (il y en a bien plus de 4) :  
-    - `Profile`, `ProfileSidebarComponent`, `PersonalInfoForm`, `SkillsSection`, `SocialMediaSection` (feature profile).  
-    - `Projects`, `ProjectCard`, `AddProject`, `EditeProject`, `ProjectsGrid`, `ProjectsHeader` (feature project).  
-    - `TemplatesPage`, `TemplateEditor` (feature template).  
-    - `CvUploadComponent`, `PortfolioViewerComponent`.  
-  - Tous sont des **standalone components** (`standalone: true`) avec `imports` explicites.
+### Qu'est-ce qu'Angular ?
 
-- **Composants imbriqués (3 pts)**  
-  - `Profile` contient : `ProfileSidebarComponent` + `PersonalInfoForm` + `SkillsSection` + `SocialMediaSection`.  
-  - `Projects` contient : `ProfileSidebarComponent` + `ProjectsHeader` + `ProjectsGrid` (qui lui-même utilise `ProjectCard`).  
-  - `PortfolioViewerComponent` réutilise également `ProfileSidebarComponent`.  
-  - Tu peux expliquer le passage de données via `@Input` / `@Output` (`ProjectCard` émet des événements `edit` / `delete`).
+Angular est un framework JavaScript/TypeScript développé par Google pour créer des applications web dynamiques (SPA - Single Page Applications). Il suit le pattern **MVC** (Model-View-Controller) et utilise le concept de **composants** comme unité de base.
 
-- **Services Angular partagés entre composants (5 pts)**  
-  - `UserService` partagé entre : `Profile`, `ProfileSidebarComponent`, `PersonalInfoForm`, `SkillsSection`, `SocialMediaSection`, `CvUploadComponent`, `PortfolioViewerComponent`, `TemplatesPage`, `TemplateEditor`, `Projects`, etc.  
-  - `ProjectService` partagé entre : `Projects`, `AddProject`, `EditeProject`, `ProjectService` lui-même, `CvUploadComponent`, `PortfolioViewerComponent`, `TemplateEditor`, `TemplatesPage`.  
-  - `TemplateService`, `PortfolioService`, `CvParserService`, `AuthService`, `ApiService`, `SocialLinksService` : centralisation de la logique métier et des appels HTTP.  
-  - Pour l’oral : bien expliquer le rôle des services (`@Injectable({ providedIn: 'root' })`) et pourquoi on ne met pas la logique HTTP dans les composants.
+### Concepts fondamentaux
 
-- **Formulaires + validation (5 pts)**  
-  - **Formulaire réactif complet** dans `CvUploadComponent` (`FormGroup`, `FormArray`, `Validators`) avec :  
-    - Infos perso : `full_name`, `email`, `phone`, `address`, `linkedin`, `github`.  
-    - Profil : `title`, `summary`.  
-    - `experiences`, `educations`, `languages`, `projects` comme `FormArray` (méthodes `addExperience`, `addEducation`, etc.).  
-    - Validations : `Validators.required`, `Validators.email`, `Validators.minLength(3)` avec messages d’erreur dans `cv-upload.html`.  
-  - **Formulaire template-driven** simple dans certains composants (ex : `SkillsSection` avec `[(ngModel)]="newSkill"`).  
-  - Pour l’oral : être capable d’expliquer la différence **template-driven vs reactive forms**, la gestion des erreurs (`f['email'].touched && f['email'].invalid`), et pourquoi les `FormArray` sont utiles ici.
+#### 1. **Composants (Components)**
 
-- **Routing (3 pts)**  
-  - Déclaration centralisée dans `app.routes.ts` : routes vers `profile`, `projects`, `templates`, `templates/:id`, `cv-upload`, `portfolio`, `portfolio/:id` et redirection par défaut vers `profile`.  
-  - Utilisation de `RouterModule` et de `routerLink` dans la sidebar (`ProfileSidebarComponent`) pour la navigation.  
-  - `app.html` utilise `<router-outlet></router-outlet>` comme point d’entrée de toutes les pages.  
-  - Tu peux expliquer le fonctionnement d’une route paramétrée (`templates/:id`, `portfolio/:id`) et la différence entre navigation déclarative (`routerLink`) et impérative (`Router.navigate`).
+Un composant Angular est une classe TypeScript associée à un template HTML et des styles. Il représente une partie de l'interface utilisateur.
 
-- **Services HTTP (Json server ou autre similaire) (3 pts)**  
-  - Utilisation d’`HttpClient` dans plusieurs services :  
-    - `UserService`, `ProjectService`, `TemplateService`, `PortfolioService`, `CvParserService`, `AuthService`, `ApiService`, `SocialLinksService`.  
-  - Les services parlent avec un **backend FastAPI** (au lieu de JSON server) via les URLs définies dans `shared/config/api.config.ts`.  
-  - Exemples : `ProjectService.createProject`, `UserService.updateUserProfile`, `CvParserService.parseCv`, `CvParserService.parseCvExternal`, `CvParserService.parseCvOllama`.  
-  - Pour l’oral : insister sur l’utilisation d’`Observable`, `subscribe`, la gestion d’erreurs (`catchError`) et pourquoi on isole les appels HTTP dans les services.
+**Exemple dans le projet : `ProjectCard`**
 
-- **Réponses aux questions de cours et du code (5 pts)**  
-  Prépare-toi à pouvoir expliquer :  
-  - Différence **composant / service / module** (même si ici on est en standalone components).  
-  - Différence **template-driven forms / reactive forms** et pourquoi tu as choisi les reactive forms pour `cv-upload`.  
-  - Rôle des **pipes** et des **directives** (structurales `*ngIf`, `*ngFor`, attributives comme `appHighlightOnHover`).  
-  - Principe du **routing** Angular et des routes paramétrées.  
-  - Pourquoi utiliser des **services partagés** au lieu de dupliquer la logique dans les composants.  
-  - Comment fonctionne la **communication parent/enfant** avec `@Input` / `@Output` (ex : `ProjectCard` → `Projects`).  
-  - Comment Tailwind est intégré et utilisé pour le design.
+```typescript
+// project-card.ts
+@Component({
+  selector: 'app-project-card',  // Nom du composant dans le HTML
+  standalone: true,              // Composant standalone (Angular 17+)
+  imports: [                     // Imports nécessaires
+    CommonModule,
+    StatusColorPipe,
+    HighlightOnHoverDirective
+  ],
+  templateUrl: './project-card.html',
+  styleUrls: ['./project-card.scss'],
+})
+export class ProjectCard {
+  @Input() project!: Project;           // Données reçues du parent
+  @Output() edit = new EventEmitter();  // Événement envoyé au parent
+}
+```
 
-### Questions typiques que le professeur peut poser
+**Utilisation dans le template :**
+```html
+<!-- projects-grid.html -->
+<app-project-card 
+  [project]="project"           <!-- Passage de données -->
+  (edit)="onEdit($event)"       <!-- Écoute d'événement -->
+  (delete)="onDelete($event)">
+</app-project-card>
+```
 
-- **Composants / structure**
-  - Explique la structure de ton projet (features, shared, services, core/models).  
-  - Donne un exemple de composant imbriqué et explique le passage de données.
+#### 2. **Services**
 
-- **Routing**
-  - Comment as-tu défini la route `/projects` ?  
-  - Comment récupèrerais-tu l’`id` dans une route comme `/templates/:id` ?
+Les services contiennent la logique métier et les appels HTTP. Ils sont injectables et partagés entre composants.
 
-- **Formulaires**
-  - Pourquoi as-tu utilisé un `FormArray` dans `CvUploadComponent` ?  
-  - Comment Angular sait qu’un champ est invalide ?  
-  - Différence entre `[(ngModel)]` et `formControlName`.
+**Exemple : `UserService`**
 
-- **Services & HTTP**
-  - À quoi sert `UserService` ? Dans quels composants est-il utilisé ?  
-  - Comment gères-tu les erreurs HTTP dans `CvUploadComponent.save()` ?  
-  - Pourquoi on utilise `forkJoin` pour sauvegarder le profil + les projets ?
+```typescript
+@Injectable({ providedIn: 'root' })  // Service singleton global
+export class UserService {
+  private baseUrl = 'http://localhost:5000/api/users';
+  private user = signal<User | null>(null);  // Signal pour l'état réactif
 
-- **Directives & pipes**
-  - Différence entre une directive structurelle et une directive d’attribut.  
-  - Explique le rôle de `StatusColorPipe` et comment il est utilisé dans `project-card.html`.  
-  - À quoi sert la directive `appHighlightOnHover` ?
+  constructor(private http: HttpClient) {}  // Injection de dépendance
 
-- **Design / Tailwind**
-  - Pourquoi as-tu choisi Tailwind ?  
-  - Comment as-tu assuré une IHM cohérente entre `profile`, `projects` et `portfolio` ?
+  getUserProfile(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${this.publicUserId}`);
+  }
 
-Ce README te sert de fiche de révision rapide : ouvre les fichiers mentionnés pendant ta préparation et entraîne-toi à expliquer chaque point à voix haute.
+  // Méthode pour obtenir le signal (état réactif)
+  getUserSignal() {
+    return this.user;
+  }
+}
+```
+
+**Utilisation dans un composant :**
+```typescript
+constructor(private userService: UserService) {}
+
+ngOnInit() {
+  this.userService.getUserProfile().subscribe({
+    next: (response) => {
+      // Traiter la réponse
+    },
+    error: (error) => {
+      // Gérer l'erreur
+    }
+  });
+}
+```
+
+#### 3. **Signals (Angular 17+)**
+
+Les signals sont une nouvelle API réactive pour gérer l'état. Plus simple et performant que les Observables pour certains cas.
+
+**Exemple :**
+```typescript
+// Déclaration
+isDarkMode = signal<boolean>(false);
+
+// Lecture
+if (this.isDarkMode()) { ... }
+
+// Modification
+this.isDarkMode.set(true);
+this.isDarkMode.update(mode => !mode);
+
+// Computed (dérivé d'autres signals)
+currentUser = computed(() => this.userService.getUserSignal()());
+```
+
+#### 4. **Directives**
+
+Les directives modifient le comportement ou l'apparence d'un élément DOM.
+
+**Directives structurelles (modifient la structure DOM) :**
+- `*ngIf` : Affiche/masque un élément
+- `*ngFor` : Répète un élément pour chaque élément d'un tableau
+- `@if`, `@for` : Nouvelles syntaxes (Angular 17+)
+
+**Exemple :**
+```html
+<!-- Ancienne syntaxe -->
+<div *ngIf="isLoading">Chargement...</div>
+<div *ngFor="let project of projects">{{ project.title }}</div>
+
+<!-- Nouvelle syntaxe (Angular 17+) -->
+@if (isLoading()) {
+  <div>Chargement...</div>
+}
+
+@for (project of projects(); track project._id) {
+  <div>{{ project.title }}</div>
+}
+```
+
+**Directives d'attribut (modifient l'apparence/comportement) :**
+```typescript
+// highlight-on-hover.directive.ts
+@Directive({
+  selector: '[appHighlightOnHover]'
+})
+export class HighlightOnHoverDirective {
+  @HostListener('mouseenter')
+  onMouseEnter() {
+    // Ajouter un effet au survol
+  }
+}
+```
+
+**Utilisation :**
+```html
+<div appHighlightOnHover>Mon contenu</div>
+```
+
+#### 5. **Pipes**
+
+Les pipes transforment les données dans les templates.
+
+**Pipes prédéfinis :**
+- `{{ date | date }}` : Formate une date
+- `{{ text | uppercase }}` : Met en majuscules
+- `{{ items | slice:0:5 }}` : Prend les 5 premiers éléments
+
+**Pipes personnalisés :**
+```typescript
+// status-color.pipe.ts
+@Pipe({ name: 'statusColor', standalone: true })
+export class StatusColorPipe implements PipeTransform {
+  transform(status: string): string {
+    const colors = {
+      'Active': 'bg-green-500',
+      'Complete': 'bg-blue-500',
+      'Pending': 'bg-yellow-500'
+    };
+    return colors[status] || 'bg-gray-500';
+  }
+}
+```
+
+**Utilisation :**
+```html
+<span [class]="project.status | statusColor">
+  {{ project.status }}
+</span>
+```
+
+#### 6. **Formulaires réactifs**
+
+Les formulaires réactifs utilisent `FormGroup`, `FormControl`, et `FormArray` pour gérer les formulaires de manière programmatique.
+
+**Exemple : `CvUploadComponent`**
+
+```typescript
+form!: FormGroup;
+
+constructor(private fb: FormBuilder) {
+  this.form = this.fb.group({
+    full_name: ['', [Validators.required, Validators.minLength(3)]],
+    email: ['', [Validators.required, Validators.email]],
+    experiences: this.fb.array([]),  // Tableau dynamique
+    projects: this.fb.array([])
+  });
+}
+
+// Getter pour accéder au FormArray
+get experiences(): FormArray {
+  return this.form.get('experiences') as FormArray;
+}
+
+// Ajouter une expérience
+addExperience() {
+  const experienceGroup = this.fb.group({
+    company: [''],
+    role: [''],
+    start_date: ['']
+  });
+  this.experiences.push(experienceGroup);
+}
+```
+
+**Template :**
+```html
+<form [formGroup]="form">
+  <input formControlName="full_name" />
+  <div *ngIf="form.get('full_name')?.invalid && form.get('full_name')?.touched">
+    Le nom est requis
+  </div>
+
+  <div formArrayName="experiences">
+    <div *ngFor="let exp of experiences.controls; let i = index" [formGroupName]="i">
+      <input formControlName="company" />
+    </div>
+  </div>
+</form>
+```
+
+#### 7. **Routing (Navigation)**
+
+Le routing permet de naviguer entre les pages sans recharger l'application.
+
+**Configuration : `app.routes.ts`**
+```typescript
+export const routes: Routes = [
+  { path: 'profile', component: Profile },
+  { path: 'projects', component: Projects },
+  { path: 'templates/:id', component: TemplateEditor },  // Route paramétrée
+  { path: 'portfolio/:id', component: PortfolioViewerComponent },
+  { path: '', redirectTo: 'profile', pathMatch: 'full' }
+];
+```
+
+**Navigation déclarative (dans le template) :**
+```html
+<a routerLink="/projects">Mes projets</a>
+<a [routerLink]="['/templates', template._id]">Éditer</a>
+```
+
+**Navigation impérative (dans le code) :**
+```typescript
+constructor(private router: Router) {}
+
+goToProjects() {
+  this.router.navigate(['/projects']);
+}
+
+// Avec paramètres
+editTemplate(id: string) {
+  this.router.navigate(['/templates', id]);
+}
+
+// Récupérer les paramètres de route
+constructor(private route: ActivatedRoute) {}
+
+ngOnInit() {
+  this.route.params.subscribe(params => {
+    const id = params['id'];  // Récupère l'ID de la route
+  });
+}
+```
+
+#### 8. **HTTP Client**
+
+`HttpClient` permet de faire des appels HTTP (GET, POST, PUT, DELETE).
+
+**Exemple dans un service :**
+```typescript
+constructor(private http: HttpClient) {}
+
+// GET
+getProjects(): Observable<Project[]> {
+  return this.http.get<Project[]>(`${this.baseUrl}/projects`);
+}
+
+// POST
+createProject(project: Project): Observable<Project> {
+  return this.http.post<Project>(`${this.baseUrl}/projects`, project);
+}
+
+// PUT
+updateProject(id: string, project: Project): Observable<Project> {
+  return this.http.put<Project>(`${this.baseUrl}/projects/${id}`, project);
+}
+
+// DELETE
+deleteProject(id: string): Observable<void> {
+  return this.http.delete<void>(`${this.baseUrl}/projects/${id}`);
+}
+```
+
+**Utilisation avec gestion d'erreurs :**
+```typescript
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
+this.projectService.getProjects().pipe(
+  catchError(error => {
+    console.error('Erreur:', error);
+    return of([]);  // Retourner une valeur par défaut
+  })
+).subscribe(projects => {
+  this.projects = projects;
+});
+```
+
+#### 9. **Communication Parent-Enfant**
+
+**Parent → Enfant : `@Input`**
+```typescript
+// Enfant (ProjectCard)
+@Input() project!: Project;
+
+// Parent (ProjectsGrid)
+<app-project-card [project]="project"></app-project-card>
+```
+
+**Enfant → Parent : `@Output`**
+```typescript
+// Enfant (ProjectCard)
+@Output() edit = new EventEmitter<Project>();
+
+onEdit() {
+  this.edit.emit(this.project);
+}
+
+// Parent (ProjectsGrid)
+<app-project-card (edit)="onEdit($event)"></app-project-card>
+
+onEdit(project: Project) {
+  // Traiter l'événement
+}
+```
+
+#### 10. **Lifecycle Hooks**
+
+Les hooks du cycle de vie permettent d'exécuter du code à des moments précis.
+
+```typescript
+export class MyComponent implements OnInit, OnDestroy {
+  ngOnInit() {
+    // Exécuté après la création du composant
+    // Idéal pour charger des données
+  }
+
+  ngOnDestroy() {
+    // Exécuté avant la destruction du composant
+    // Idéal pour nettoyer (unsubscribe, etc.)
+  }
+}
+```
+
+---
+
+## 🏗️ Architecture du projet
+
+### Structure des dossiers
+
+```
+frontend/src/app/
+├── core/
+│   └── models/          # Modèles TypeScript (User, Project, etc.)
+├── features/           # Modules fonctionnels
+│   ├── profile/        # Gestion du profil
+│   ├── project/        # Gestion des projets
+│   ├── template/       # Gestion des templates
+│   ├── portfolio/      # Affichage du portfolio
+│   └── cv-upload/      # Upload et parsing de CV
+├── services/           # Services partagés
+│   ├── user.service.ts
+│   ├── project.service.ts
+│   └── ...
+├── shared/            # Composants/pipes/directives partagés
+│   ├── pipes/
+│   ├── directives/
+│   └── config/
+└── app.routes.ts      # Configuration du routing
+```
+
+### Pattern utilisé : Feature-based architecture
+
+Chaque feature contient ses propres composants, services spécifiques, et logique métier. Les services partagés sont dans `/services`.
+
+**Avantages :**
+- ✅ Séparation claire des responsabilités
+- ✅ Facilite la maintenance
+- ✅ Réutilisabilité des composants
+
+---
+
+## 🔑 Notions clés expliquées
+
+### 1. Standalone Components (Angular 17+)
+
+Les composants standalone n'ont plus besoin d'être déclarés dans un module. Ils importent directement leurs dépendances.
+
+**Avant (avec modules) :**
+```typescript
+// app.module.ts
+@NgModule({
+  declarations: [ProjectCard],
+  imports: [CommonModule]
+})
+```
+
+**Maintenant (standalone) :**
+```typescript
+@Component({
+  standalone: true,
+  imports: [CommonModule, StatusColorPipe]
+})
+export class ProjectCard { }
+```
+
+### 2. Dependency Injection (Injection de dépendances)
+
+Angular injecte automatiquement les dépendances via le constructeur.
+
+```typescript
+constructor(
+  private userService: UserService,      // Injection
+  private http: HttpClient,              // Injection
+  private router: Router                 // Injection
+) {}
+```
+
+Angular crée une instance unique (singleton) de chaque service grâce à `providedIn: 'root'`.
+
+### 3. Observables vs Signals
+
+**Observables (RxJS)** : Pour les opérations asynchrones (HTTP, événements)
+```typescript
+this.userService.getUserProfile().subscribe(user => {
+  this.user = user;
+});
+```
+
+**Signals** : Pour l'état réactif simple
+```typescript
+user = signal<User | null>(null);
+user.set(newUser);  // Mise à jour automatique de la vue
+```
+
+### 4. Template-driven vs Reactive Forms
+
+**Template-driven** : Simple, déclaratif
+```html
+<input [(ngModel)]="username" required />
+```
+
+**Reactive** : Plus de contrôle, validation programmatique
+```typescript
+form = this.fb.group({
+  username: ['', Validators.required]
+});
+```
+
+**Quand utiliser quoi ?**
+- Template-driven : Formulaires simples
+- Reactive : Formulaires complexes avec validation dynamique (comme dans `CvUploadComponent`)
+
+### 5. Change Detection
+
+Angular détecte automatiquement les changements et met à jour la vue. Avec les signals, la détection est encore plus optimisée.
+
+---
+
+## 💻 Exemples de code du projet
+
+### Exemple 1 : Composant avec Input/Output
+
+**`project-card.ts`**
+```typescript
+@Component({
+  selector: 'app-project-card',
+  standalone: true,
+  imports: [CommonModule, StatusColorPipe, HighlightOnHoverDirective],
+  templateUrl: './project-card.html'
+})
+export class ProjectCard {
+  @Input() project!: Project;              // Reçoit les données
+  @Output() edit = new EventEmitter<Project>();    // Émet un événement
+  @Output() delete = new EventEmitter<string>();
+
+  onEdit() {
+    this.edit.emit(this.project);
+  }
+
+  onDelete() {
+    this.delete.emit(this.project._id);
+  }
+}
+```
+
+### Exemple 2 : Service avec HTTP et Signals
+
+**`user.service.ts`**
+```typescript
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private user = signal<User | null>(null);
+
+  constructor(private http: HttpClient) {}
+
+  getUserProfile(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${this.publicUserId}`).pipe(
+      tap(response => {
+        this.user.set(response.data);  // Mise à jour du signal
+      })
+    );
+  }
+
+  getUserSignal() {
+    return this.user;  // Retourne le signal pour lecture
+  }
+}
+```
+
+### Exemple 3 : Formulaire réactif avec FormArray
+
+**`cv-upload.ts`**
+```typescript
+form = this.fb.group({
+  full_name: ['', [Validators.required, Validators.minLength(3)]],
+  email: ['', [Validators.required, Validators.email]],
+  experiences: this.fb.array([]),  // Tableau dynamique
+  projects: this.fb.array([])
+});
+
+get experiences(): FormArray {
+  return this.form.get('experiences') as FormArray;
+}
+
+addExperience() {
+  const expGroup = this.fb.group({
+    company: [''],
+    role: [''],
+    start_date: ['']
+  });
+  this.experiences.push(expGroup);
+}
+
+removeExperience(index: number) {
+  this.experiences.removeAt(index);
+}
+```
+
+### Exemple 4 : Routing avec paramètres
+
+**`portfolio-viewer.ts`**
+```typescript
+constructor(private route: ActivatedRoute) {}
+
+ngOnInit() {
+  this.route.params.subscribe(params => {
+    const param = params['id'];
+    // Détecter si c'est un ID MongoDB ou un slug
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(param);
+    
+    if (isMongoId) {
+      this.portfolioId = param;
+      this.loadPortfolio();
+    } else {
+      this.publicUrl = param;
+      this.isPublicView.set(true);
+      this.loadPortfolioByUrl();
+    }
+  });
+}
+```
+
+### Exemple 5 : Pipe personnalisé
+
+**`status-color.pipe.ts`**
+```typescript
+@Pipe({ name: 'statusColor', standalone: true })
+export class StatusColorPipe implements PipeTransform {
+  transform(status: string): string {
+    const colors: { [key: string]: string } = {
+      'Active': 'bg-green-500 text-white',
+      'Complete': 'bg-blue-500 text-white',
+      'Pending': 'bg-yellow-500 text-white'
+    };
+    return colors[status] || 'bg-gray-500 text-white';
+  }
+}
+```
+
+**Utilisation :**
+```html
+<span [class]="project.status | statusColor">
+  {{ project.status }}
+</span>
+```
+
+### Exemple 6 : Directive personnalisée
+
+**`highlight-on-hover.directive.ts`**
+```typescript
+@Directive({
+  selector: '[appHighlightOnHover]',
+  standalone: true
+})
+export class HighlightOnHoverDirective {
+  constructor(
+    private el: ElementRef,
+    private renderer: Renderer2
+  ) {}
+
+  @HostListener('mouseenter')
+  onMouseEnter() {
+    this.renderer.setStyle(this.el.nativeElement, 'boxShadow', 
+      '0 20px 25px -5px rgba(79, 70, 229, 0.25)');
+    this.renderer.setStyle(this.el.nativeElement, 'transform', 'translateY(-2px)');
+  }
+
+  @HostListener('mouseleave')
+  onMouseLeave() {
+    this.renderer.setStyle(this.el.nativeElement, 'boxShadow', 'none');
+    this.renderer.setStyle(this.el.nativeElement, 'transform', 'none');
+  }
+}
+```
+
+---
+
+## 📊 Mapping avec le barème du projet Angular
+
+### Test des fonctionnalités implémentées (4 pts)
+
+**Écrans principaux :**
+- ✅ `profile` : Gestion des infos perso, skills et réseaux sociaux
+- ✅ `projects` : CRUD projets avec cartes et grille
+- ✅ `templates` : Choix et édition de template
+- ✅ `cv-upload` : Upload de CV PDF, parsing et remplissage auto
+- ✅ `portfolio` : Affichage du portfolio généré
+
+**Comment tester :**
+1. Naviguer avec la sidebar ou directement via l'URL
+2. Créer/éditer/supprimer un projet
+3. Modifier les infos perso/skills/réseaux sociaux
+4. Uploader un PDF dans CV Upload, parser et sauvegarder
+5. Générer/régénérer le portfolio
+
+### Clarté de code (2 pts)
+
+- ✅ Organisation en **features** (`features/profile`, `features/project`, etc.)
+- ✅ Services partagés (`UserService`, `ProjectService`, etc.)
+- ✅ Utilisation de **signals/computed** pour l'état
+- ✅ Nommage explicite des composants et méthodes
+
+### Design (Tailwind + IHM) (3 pts)
+
+- ✅ Tailwind activé avec `darkMode: 'class'`
+- ✅ Layout cohérent avec sidebar fixe
+- ✅ Cartes avec ombres et animations
+- ✅ Badges de statut colorés
+- ✅ Responsive design
+
+### Directives et pipes (3 pts)
+
+**Directives prédéfinies :**
+- ✅ `*ngIf`, `*ngFor`, `[ngClass]`
+- ✅ `@if`, `@for` (nouvelles syntaxes)
+
+**Pipes personnalisés :**
+- ✅ `TruncatePipe` : Tronquer les descriptions
+- ✅ `StatusColorPipe` : Classes Tailwind selon le statut
+- ✅ `TechListPipe` : Concaténer les technos
+- ✅ `ImageFallbackPipe` : Fallback d'image
+
+**Directive personnalisée :**
+- ✅ `HighlightOnHoverDirective` : Effet au survol
+
+### Composants Angular (4 pts)
+
+**Exemples (bien plus de 4) :**
+- ✅ `Profile`, `ProfileSidebarComponent`, `PersonalInfoForm`
+- ✅ `Projects`, `ProjectCard`, `AddProject`, `EditeProject`
+- ✅ `TemplatesPage`, `TemplateEditor`
+- ✅ `CvUploadComponent`, `PortfolioViewerComponent`
+
+Tous sont des **standalone components**.
+
+### Composants imbriqués (3 pts)
+
+- ✅ `Profile` contient : `ProfileSidebarComponent` + `PersonalInfoForm` + `SkillsSection`
+- ✅ `Projects` contient : `ProfileSidebarComponent` + `ProjectsHeader` + `ProjectsGrid` (qui utilise `ProjectCard`)
+- ✅ Communication via `@Input` / `@Output`
+
+### Services Angular partagés (5 pts)
+
+- ✅ `UserService` : Partagé entre `Profile`, `ProfileSidebarComponent`, `CvUploadComponent`, etc.
+- ✅ `ProjectService` : Partagé entre `Projects`, `AddProject`, `CvUploadComponent`, etc.
+- ✅ `TemplateService`, `PortfolioService`, `CvParserService`
+- ✅ Tous avec `@Injectable({ providedIn: 'root' })`
+
+### Formulaires + validation (5 pts)
+
+- ✅ **Formulaire réactif complet** dans `CvUploadComponent`
+  - `FormGroup`, `FormArray`, `Validators`
+  - Validations : `required`, `email`, `minLength`
+  - Messages d'erreur dans le template
+- ✅ **Formulaire template-driven** dans `SkillsSection` avec `[(ngModel)]`
+
+### Routing (3 pts)
+
+- ✅ Routes déclarées dans `app.routes.ts`
+- ✅ Routes paramétrées : `templates/:id`, `portfolio/:id`
+- ✅ Navigation déclarative (`routerLink`) et impérative (`Router.navigate`)
+- ✅ `<router-outlet>` dans `app.html`
+
+### Services HTTP (3 pts)
+
+- ✅ Utilisation d'`HttpClient` dans les services
+- ✅ Communication avec backend FastAPI
+- ✅ Gestion d'erreurs avec `catchError`
+- ✅ Utilisation d'`Observable` et `subscribe`
+
+### Réponses aux questions (5 pts)
+
+Prépare-toi à expliquer :
+- ✅ Différence composant / service / module
+- ✅ Template-driven vs reactive forms
+- ✅ Rôle des pipes et directives
+- ✅ Principe du routing
+- ✅ Communication parent/enfant
+- ✅ Intégration de Tailwind
+
+---
+
+## ❓ Questions typiques
+
+### Composants / Structure
+
+**Q : Explique la structure de ton projet.**
+
+**R :** Le projet suit une architecture **feature-based** :
+- `features/` : Chaque feature (profile, project, etc.) contient ses composants
+- `services/` : Services partagés pour la logique métier et HTTP
+- `shared/` : Pipes, directives, config partagés
+- `core/models/` : Modèles TypeScript
+
+**Q : Donne un exemple de composant imbriqué.**
+
+**R :** `Projects` contient `ProjectsGrid`, qui contient `ProjectCard`. Communication via `@Input` pour passer les données et `@Output` pour les événements.
+
+### Routing
+
+**Q : Comment récupérer l'ID dans `/templates/:id` ?**
+
+**R :**
+```typescript
+constructor(private route: ActivatedRoute) {}
+
+ngOnInit() {
+  this.route.params.subscribe(params => {
+    const id = params['id'];
+  });
+}
+```
+
+### Formulaires
+
+**Q : Pourquoi utiliser `FormArray` dans `CvUploadComponent` ?**
+
+**R :** Pour gérer dynamiquement plusieurs expériences, formations, langues, projets. On peut ajouter/supprimer des éléments à la volée.
+
+**Q : Différence entre `[(ngModel)]` et `formControlName` ?**
+
+**R :**
+- `[(ngModel)]` : Template-driven, bidirectionnel, simple
+- `formControlName` : Reactive forms, plus de contrôle, validation programmatique
+
+### Services & HTTP
+
+**Q : À quoi sert `UserService` ?**
+
+**R :** Centralise la logique de gestion de l'utilisateur : récupération du profil, mise à jour, upload d'image, gestion des skills. Utilisé par plusieurs composants.
+
+**Q : Comment gérer les erreurs HTTP ?**
+
+**R :**
+```typescript
+this.userService.getUserProfile().pipe(
+  catchError(error => {
+    console.error('Erreur:', error);
+    return of(null);  // Valeur par défaut
+  })
+).subscribe(user => {
+  // Traiter la réponse
+});
+```
+
+### Directives & Pipes
+
+**Q : Différence directive structurelle vs attribut ?**
+
+**R :**
+- **Structurelle** (`*ngIf`, `*ngFor`) : Modifie la structure DOM (ajoute/supprime des éléments)
+- **Attribut** (`appHighlightOnHover`) : Modifie l'apparence/comportement d'un élément existant
+
+**Q : Explique `StatusColorPipe`.**
+
+**R :** Transforme un statut (string) en classes Tailwind CSS pour le style. Utilisé dans `project-card.html` pour colorer les badges de statut.
+
+### Design / Tailwind
+
+**Q : Pourquoi Tailwind ?**
+
+**R :** Framework CSS utilitaire qui permet de styliser rapidement sans écrire de CSS custom. Classes utilitaires comme `bg-blue-500`, `rounded-xl`, `shadow-lg`.
+
+**Q : Comment assurer une IHM cohérente ?**
+
+**R :** 
+- Sidebar fixe réutilisée (`ProfileSidebarComponent`)
+- Classes Tailwind cohérentes
+- Composants réutilisables (`ProjectCard`, etc.)
+- Design system avec couleurs et espacements constants
+
+---
+
+## 🎓 Ressources pour approfondir
+
+- [Documentation officielle Angular](https://angular.dev)
+- [Angular Signals](https://angular.dev/guide/signals)
+- [Reactive Forms](https://angular.dev/guide/forms/reactive-forms)
+- [Routing](https://angular.dev/guide/router)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+
+---
+
+## 📝 Notes importantes
+
+- Ce projet utilise **Angular 17+** avec **standalone components**
+- Les **signals** sont utilisés pour l'état réactif
+- Le backend est en **FastAPI** (Python)
+- Le design utilise **Tailwind CSS** avec support du dark mode
+
+---
+
+**Bon courage pour votre présentation ! 🚀**
