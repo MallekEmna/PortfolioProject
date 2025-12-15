@@ -8,23 +8,66 @@ import { PORTFOLIO_STATUS } from '../utils/constants.js';
  */
 class PortfolioService {
     /**
-     * Create new portfolio
+     * Create or update portfolio for user
+     * @param {object} portfolioData - Portfolio data
+     * @returns {Promise<object>} Created or updated portfolio
+     */
+    static async createOrUpdatePortfolio(portfolioData) {
+        const { userId } = portfolioData;
+        
+        // Check if portfolio already exists for this user
+        const existingPortfolio = await Portfolio.findOne({ userId })
+            .sort({ createdAt: -1 }); // Get the most recent one
+        
+        if (existingPortfolio) {
+            // Update existing portfolio
+            const updateData = {
+                ...portfolioData,
+                status: existingPortfolio.status || PORTFOLIO_STATUS.DRAFT,
+                isPublished: existingPortfolio.isPublished || false
+            };
+            
+            // Keep existing publicUrl if it exists, otherwise generate new one
+            if (!existingPortfolio.publicUrl) {
+                updateData.publicUrl = generateSlug(portfolioData.title || 'portfolio') + '-' + Date.now();
+            }
+            
+            const updated = await Portfolio.findByIdAndUpdate(
+                existingPortfolio._id,
+                updateData,
+                { new: true, runValidators: true }
+            );
+            
+            return await Portfolio.findById(updated._id)
+                .populate('userId')
+                .populate('templateId')
+                .populate('projects');
+        } else {
+            // Create new portfolio
+            const publicUrl = generateSlug(portfolioData.title || 'portfolio') + '-' + Date.now();
+            
+            const portfolio = new Portfolio({
+                ...portfolioData,
+                publicUrl,
+                status: PORTFOLIO_STATUS.DRAFT,
+                isPublished: false
+            });
+            
+            const saved = await portfolio.save();
+            return await Portfolio.findById(saved._id)
+                .populate('userId')
+                .populate('templateId')
+                .populate('projects');
+        }
+    }
+
+    /**
+     * Create new portfolio (legacy method for backward compatibility)
      * @param {object} portfolioData - Portfolio data
      * @returns {Promise<object>} Created portfolio
      */
     static async createPortfolio(portfolioData) {
-        // Generate unique public URL
-        const publicUrl = generateSlug(portfolioData.title || 'portfolio') + '-' + Date.now();
-        
-        const portfolio = new Portfolio({
-            ...portfolioData,
-            publicUrl,
-            status: PORTFOLIO_STATUS.DRAFT
-        });
-        
-        return await portfolio.save()
-            .populate('userId')
-            .populate('templateId');
+        return this.createOrUpdatePortfolio(portfolioData);
     }
 
     /**
@@ -33,9 +76,19 @@ class PortfolioService {
      * @returns {Promise<object|null>} Portfolio document
      */
     static async getPortfolioById(portfolioId) {
-        return await Portfolio.findById(portfolioId)
+        const portfolio = await Portfolio.findById(portfolioId)
             .populate('userId', 'username email profileImage')
-            .populate('templateId');
+            .populate('templateId')
+            .populate('projects', 'title status image');
+        
+        console.log('Portfolio found:', portfolio ? 'Yes' : 'No');
+        if (portfolio) {
+            console.log('Portfolio userId:', portfolio.userId);
+            console.log('Portfolio userId type:', typeof portfolio.userId);
+            console.log('Portfolio userId._id:', portfolio.userId?._id);
+        }
+        
+        return portfolio;
     }
 
     /**
@@ -46,10 +99,12 @@ class PortfolioService {
     static async getPortfolioByPublicUrl(publicUrl) {
         return await Portfolio.findOne({ 
             publicUrl, 
-            status: PORTFOLIO_STATUS.PUBLISHED 
+            status: PORTFOLIO_STATUS.PUBLISHED,
+            isPublished: true
         })
             .populate('userId', 'username email profileImage')
-            .populate('templateId');
+            .populate('templateId')
+            .populate('projects', 'title status image');
     }
 
     /**
@@ -67,7 +122,8 @@ class PortfolioService {
         }
         
         return await Portfolio.find(query)
-            .populate('templateId')
+            .populate('templateId', 'name category preview')
+            .populate('projects', 'title status image')
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
@@ -85,7 +141,9 @@ class PortfolioService {
             updateData,
             { new: true, runValidators: true }
         )
-            .populate('userId templateId');
+            .populate('userId', 'username email profileImage')
+            .populate('templateId')
+            .populate('projects', 'title status image');
     }
 
     /**
@@ -102,7 +160,9 @@ class PortfolioService {
             },
             { new: true }
         )
-            .populate('userId templateId');
+            .populate('userId', 'username email profileImage')
+            .populate('templateId')
+            .populate('projects', 'title status image');
     }
 
     /**
@@ -124,10 +184,12 @@ class PortfolioService {
         const { page = 1, limit = 10 } = options;
         
         return await Portfolio.find({ 
-            status: PORTFOLIO_STATUS.PUBLISHED 
+            status: PORTFOLIO_STATUS.PUBLISHED,
+            isPublished: true
         })
             .populate('userId', 'username profileImage')
-            .populate('templateId', 'name preview')
+            .populate('templateId', 'name preview category')
+            .populate('projects', 'title status image')
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);

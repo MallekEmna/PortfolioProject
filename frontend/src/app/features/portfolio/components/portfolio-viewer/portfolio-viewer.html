@@ -1,0 +1,694 @@
+<div class="min-h-screen flex gap-6 bg-gradient-to-br from-gray-50 to-gray-100">
+
+    <!-- Sidebar -->
+    <app-profile-sidebar [user]="currentUser()" class="w-64 flex-shrink-0"></app-profile-sidebar>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col gap-6 overflow-y-auto p-6">
+
+        <!-- Loading State -->
+        @if (isLoading()) {
+        <div class="flex items-center justify-center min-h-[60vh]">
+            <div class="text-center">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-indigo-200 rounded-full"></div>
+                    <div
+                        class="absolute top-0 left-0 w-16 h-16 border-4 border-indigo-600 rounded-full animate-spin border-t-transparent">
+                    </div>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-gray-900">Chargement du portfolio...</h3>
+                <p class="mt-2 text-sm text-gray-600">Récupération et préparation de vos données</p>
+            </div>
+        </div>
+        }
+
+        <!-- Error State -->
+        @if (!isLoading() && error()) {
+        <div class="flex items-center justify-center min-h-[60vh]">
+            <div class="text-center max-w-md p-8 bg-white rounded-2xl shadow-lg">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Oups ! Une erreur est survenue</h3>
+                <p class="text-gray-600 mb-6">{{ error() }}</p>
+                <button (click)="goToTemplates()"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Retour aux templates
+                </button>
+            </div>
+        </div>
+        }
+
+        <!-- Portfolio Content -->
+        @if (!isLoading() && !error() && htmlContent()) {
+        <div class="portfolio-wrapper">
+            <!-- Portfolio Header -->
+            <div class="portfolio-header-sticky">
+                <div class="portfolio-header-content">
+                    <div class="portfolio-meta">
+                        <h1 class="portfolio-main-title">
+                            {{ portfolioData()?.title || 'Mon Portfolio' }}
+                            @if (portfolioData()?.status) {
+                            <span class="status-badge" [class]="'status-' + portfolioData()?.status">
+                                {{ portfolioData()?.status === 'published' ? '🌐 Publié' :
+                                portfolioData()?.status === 'draft' ? '📝 Brouillon' : '📁 Archivé' }}
+                            </span>
+                            }
+                        </h1>
+                        @if (portfolioData()?.description) {
+                        <p class="portfolio-subtitle">{{ portfolioData()?.description }}</p>
+                        }
+                    </div>
+
+                    <div class="portfolio-actions-wrapper">
+                        @if (portfolioData()?.publicUrl) {
+                        <div class="portfolio-public-link">
+                            <span class="link-label">Lien public :</span>
+                            <a [href]="'http://localhost:5000/portfolio/' + portfolioData()?.publicUrl" target="_blank"
+                                class="link-content">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                {{ portfolioData()?.publicUrl }}
+                            </a>
+                        </div>
+                        }
+
+                        <div class="action-buttons">
+                            <button (click)="goToTemplates()" class="btn btn-template">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                                </svg>
+                                Changer de template
+                            </button>
+                            <button (click)="regeneratePortfolio()" [disabled]="isLoading()" class="btn btn-regenerate">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Régénérer
+                            </button>
+                            @if (portfolioData()?.isPublished) {
+                            <button disabled class="btn btn-success">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Publié
+                            </button>
+                            } @else {
+                            <button (click)="publishPortfolio()" class="btn btn-primary">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                Publier
+                            </button>
+                            }
+                            <button (click)="editPortfolio()" class="btn btn-outline">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Modifier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Preview -->
+            <div class="portfolio-preview-container">
+                <div class="portfolio-frame" #portfolioFrame>
+                    <div class="portfolio-content-wrapper">
+                        <!-- Portfolio HTML Content -->
+                        <div class="portfolio-html-content" [innerHTML]="htmlContent()"></div>
+                    </div>
+                </div>
+
+                <!-- Preview Controls -->
+                <div class="preview-controls">
+                    <div class="device-selector">
+                        <button class="device-btn active" data-device="desktop">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Desktop
+                        </button>
+                        <button class="device-btn" data-device="tablet">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Tablet
+                        </button>
+                        <button class="device-btn" data-device="mobile">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Mobile
+                        </button>
+                    </div>
+
+                    <div class="preview-actions">
+                        <button (click)="refreshPreview()" class="action-btn">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Actualiser
+                        </button>
+                        @if (portfolioData()?.publicUrl) {
+                        <a [href]="'http://localhost:5000/portfolio/' + portfolioData()?.publicUrl" target="_blank"
+                            class="action-btn action-btn-primary">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Ouvrir dans un nouvel onglet
+                        </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+    </main>
+
+    <!-- Project Details Modal -->
+    @if (showProjectModal() && selectedProject()) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        (click)="closeProjectModal()">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 relative"
+            (click)="$event.stopPropagation()">
+            <!-- Close Button -->
+            <button (click)="closeProjectModal()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                ✕
+            </button>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <!-- Project Image -->
+                @if (selectedProject()?.image) {
+                <div class="mb-6 rounded-xl overflow-hidden">
+                    <img [src]="selectedProject()?.image?.startsWith('http') ? selectedProject()?.image : 'http://localhost:5000/uploads/images/' + selectedProject()?.image"
+                        [alt]="selectedProject()?.title" class="w-full h-64 object-cover"
+                        onerror="this.src='https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                </div>
+                }
+
+                <!-- Project Header -->
+                <div class="mb-6">
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                        <div class="flex-1">
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                {{ selectedProject()?.title || 'Projet' }}
+                            </h2>
+                            @if (selectedProject()?.companyName) {
+                            <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                <span class="font-medium">{{ selectedProject()?.companyName }}</span>
+                            </div>
+                            }
+                        </div>
+                        @if (selectedProject()?.status) {
+                        <span class="px-4 py-2 rounded-full text-sm font-semibold"
+                            [style.background]="selectedProject()?.status === 'Active' ? '#10b981' : selectedProject()?.status === 'Complete' ? '#3b82f6' : '#f59e0b'"
+                            style="color: white;">
+                            {{ selectedProject()?.status === 'Active' ? 'En cours' : selectedProject()?.status ===
+                            'Complete' ? 'Terminé' : 'En attente' }}
+                        </span>
+                        }
+                    </div>
+
+                    @if (selectedProject()?.category) {
+                    <div
+                        class="inline-block px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium mb-4">
+                        {{ selectedProject()?.category }}
+                    </div>
+                    }
+                </div>
+
+                <!-- Project Description -->
+                @if (selectedProject()?.description) {
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Description</h3>
+                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {{ selectedProject()?.description }}
+                    </p>
+                </div>
+                }
+
+                <!-- Tech Stack -->
+                @if (selectedProject()?.techStack && getTechStackArray(selectedProject()?.techStack).length > 0) {
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Technologies utilisées</h3>
+                    <div class="flex flex-wrap gap-2">
+                        @for (tech of getTechStackArray(selectedProject()?.techStack); track tech) {
+                        <span
+                            class="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-medium">
+                            {{ tech }}
+                        </span>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Project Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    @if (selectedProject()?.duration) {
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Durée</p>
+                                <p class="text-gray-900 dark:text-white font-medium">{{ selectedProject()?.duration }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <!-- Project Links -->
+                @if (selectedProject()?.linkDemo || selectedProject()?.linkGithub) {
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    @if (selectedProject()?.linkDemo) {
+                    <a [href]="selectedProject()?.linkDemo" target="_blank"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Voir le projet
+                    </a>
+                    }
+                    @if (selectedProject()?.linkGithub) {
+                    <a [href]="selectedProject()?.linkGithub" target="_blank"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 dark:bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-gray-600 transition-all shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Code source
+                    </a>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+<style>
+    /* Portfolio Wrapper */
+    .portfolio-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Sticky Header */
+    .portfolio-header-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.5rem 0;
+    }
+
+    .portfolio-header-content {
+        max-width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    .portfolio-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .portfolio-main-title {
+        font-size: 1.875rem;
+        font-weight: 800;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .portfolio-subtitle {
+        color: #6b7280;
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .status-published {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .status-draft {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .status-archived {
+        background-color: #e5e7eb;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    /* Portfolio Actions */
+    .portfolio-actions-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .portfolio-public-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #f9fafb;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .link-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .link-content {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        color: #4f46e5;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .link-content:hover {
+        color: #3730a3;
+        text-decoration: underline;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    /* Button Styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: white;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #4338ca, #6d28d9);
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: white;
+        color: #4f46e5;
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-outline:hover {
+        border-color: #4f46e5;
+        background: #f5f3ff;
+    }
+
+    .btn-success {
+        background: #10b981;
+        color: white;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    .btn-template {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        color: white;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-template:hover {
+        background: linear-gradient(135deg, #7c3aed, #9333ea);
+        box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-regenerate {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        color: white;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-regenerate:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-regenerate:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Portfolio Preview */
+    .portfolio-preview-container {
+        background: white;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    .portfolio-frame {
+        width: 100%;
+        height: calc(100vh - 300px);
+        min-height: 600px;
+        overflow: auto;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .portfolio-content-wrapper {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        padding: 2rem;
+    }
+
+    .portfolio-html-content {
+        width: 100%;
+        height: 100%;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        border-radius: 0.75rem;
+        overflow: auto;
+    }
+
+    /* Preview Controls */
+    .preview-controls {
+        padding: 1.25rem 1.5rem;
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .device-selector {
+        display: flex;
+        gap: 0.5rem;
+        background: #f9fafb;
+        padding: 0.25rem;
+        border-radius: 0.75rem;
+    }
+
+    .device-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: transparent;
+        border: none;
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .device-btn:hover {
+        color: #4f46e5;
+        background: #f3f4f6;
+    }
+
+    .device-btn.active {
+        background: white;
+        color: #4f46e5;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        background: white;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
+
+    .action-btn-primary {
+        background: #4f46e5;
+        color: white;
+        border: none;
+    }
+
+    .action-btn-primary:hover {
+        background: #4338ca;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .portfolio-header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .portfolio-actions-wrapper {
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            justify-content: flex-end;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .portfolio-main-title {
+            font-size: 1.5rem;
+        }
+
+        .portfolio-frame {
+            height: calc(100vh - 350px);
+            min-height: 500px;
+        }
+
+        .preview-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .device-selector {
+            justify-content: center;
+        }
+
+        .preview-actions {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .portfolio-header-content {
+            gap: 0.75rem;
+        }
+
+        .portfolio-main-title {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>

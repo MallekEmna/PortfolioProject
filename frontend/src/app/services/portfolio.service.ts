@@ -13,7 +13,7 @@ export class PortfolioService {
 
     // Get user portfolios
     getUserPortfolios(params?: { page?: number; limit?: number; status?: string }): Observable<any> {
-        return this.http.get(`${this.baseUrl}`, { params });
+        return this.http.get(`${this.baseUrl}/user`, { params });
     }
 
     // Get portfolio by ID

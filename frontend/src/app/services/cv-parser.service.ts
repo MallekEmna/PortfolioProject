@@ -50,11 +50,39 @@ export class CvParserService {
 
   constructor(private http: HttpClient) {}
 
+  /**
+   * Parse CV using local extraction (pdfplumber)
+   * Fast, no API key required, data stays on server
+   */
   parseCv(file: File): Observable<ParsedCV> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<ParsedCV>(`${this.apiBase}/parse-cv`, formData, {
-      headers: { },
+      // Note: Don't set Content-Type header, let browser set it with boundary for multipart/form-data
+    });
+  }
+
+  /**
+   * Parse CV using external API (Extracta)
+   * More accurate, requires API key
+   */
+  parseCvExternal(file: File): Observable<ParsedCV> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ParsedCV>(`${this.apiBase}/parse-cv-external`, formData, {
+      // Note: Don't set Content-Type header, let browser set it with boundary for multipart/form-data
+    });
+  }
+
+  /**
+   * Parse CV using Ollama LLM
+   * Most accurate, uses local LLM, requires Ollama to be running
+   */
+  parseCvOllama(file: File): Observable<ParsedCV> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ParsedCV>(`${this.apiBase}/parse-cv-ollama`, formData, {
+      // Note: Don't set Content-Type header, let browser set it with boundary for multipart/form-data
     });
   }
 }

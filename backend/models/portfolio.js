@@ -17,12 +17,18 @@ const portfolioSchema = new mongoose.Schema({
     },
     publicUrl: {
         type: String,
-        required: true,
-        unique: true
+        required: false,
+        unique: true,
+        sparse: true
     },
     isPublished: {
         type: Boolean,
         default: false
+    },
+    status: {
+        type: String,
+        enum: ['draft', 'published', 'archived'],
+        default: 'draft'
     },
     title: {
         type: String,
@@ -31,7 +37,11 @@ const portfolioSchema = new mongoose.Schema({
     description: {
         type: String,
         default: ""
-    }
+    },
+    projects: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project"
+    }]
 }, { timestamps: true });
 
 const Portfolio = mongoose.model("Portfolio", portfolioSchema);

@@ -43,12 +43,17 @@ export const getUser = async (req, res) => {
 // -------------------------------------------------------
 export const updateUser = async (req, res) => {
   try {
-    const { username, bio, skills, phone, location, lastName, socialLinks } = req.body;
+    const { username, bio, skills, phone, location, lastName, socialLinks, templateSelected } = req.body;
 
     // Update user info
+    const updateData = { username, bio, skills, phone, location, lastName };
+    if (templateSelected !== undefined) {
+      updateData.templateSelected = templateSelected;
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { username, bio, skills, phone, location, lastName },
+      updateData,
       { new: true }
     ).select("-password");
 
@@ -81,6 +86,44 @@ export const updateUser = async (req, res) => {
     };
 
     console.log('Update - Response with social links:', userWithSocialLinks.socialLinks); // Debug log
+    res.status(200).json(userWithSocialLinks);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// -------------------------------------------------------
+// UPDATE TEMPLATE SELECTION
+// -------------------------------------------------------
+export const updateTemplateSelection = async (req, res) => {
+  try {
+    const { templateSelected } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { templateSelected },
+      { new: true }
+    ).select("-password");
+
+    if (!user)
+      return res.status(404).json({ msg: "User not found" });
+
+    // Récupérer les social links pour la réponse
+    const userSocialLinks = await SocialLinks.findOne({ userId: req.params.id });
+
+    const userWithSocialLinks = {
+      ...user.toObject(),
+      socialLinks: userSocialLinks || {
+        linkedin: "",
+        github: "",
+        facebook: "",
+        instagram: "",
+        twitter: ""
+      }
+    };
+
     res.status(200).json(userWithSocialLinks);
 
   } catch (err) {

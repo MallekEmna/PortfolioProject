@@ -53,7 +53,7 @@ class CVSchema(BaseModel):
     languages: List[LanguageItem]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "personal": {
                     "full_name": "Jane Doe",

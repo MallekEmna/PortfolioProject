@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideIconsModule } from '../../../../icons';
 import { User } from '../../../../core/models/user.model';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { UserService } from '../../../../services/user.service';
+import { PortfolioService } from '../../../../services/portfolio.service';
 
 @Component({
   selector: 'app-profile-sidebar',
@@ -12,14 +13,24 @@ import { UserService } from '../../../../services/user.service';
   templateUrl: './profile-sidebar.html',
   styleUrls: ['./profile-sidebar.scss'],
 })
-export class ProfileSidebarComponent implements OnChanges {
+export class ProfileSidebarComponent implements OnChanges, OnInit {
 
   @Input() user!: User | null;
   imageError = false;
   private imageUrl: string = '';
   private lastImageName: string = '';
+  portfolioId: string | null = null;
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private portfolioService: PortfolioService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    // Charger le portfolio de l'utilisateur
+    this.loadUserPortfolio();
+  }
 
   // Détecter les changements d'utilisateur pour réinitialiser l'URL
   ngOnChanges() {
@@ -27,6 +38,36 @@ export class ProfileSidebarComponent implements OnChanges {
       this.lastImageName = this.user?.profileImage || '';
       this.imageUrl = ''; // Réinitialiser pour générer une nouvelle URL
       this.imageError = false;
+    }
+    
+    // Recharger le portfolio si l'utilisateur change
+    if (this.user) {
+      this.loadUserPortfolio();
+    }
+  }
+
+  loadUserPortfolio() {
+    this.portfolioService.getUserPortfolios({ limit: 1 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data && response.data.length > 0) {
+          this.portfolioId = response.data[0]._id;
+        } else {
+          this.portfolioId = null;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading portfolio:', error);
+        this.portfolioId = null;
+      }
+    });
+  }
+
+  navigateToPortfolio() {
+    if (this.portfolioId) {
+      this.router.navigate(['/portfolio', this.portfolioId]);
+    } else {
+      // Si pas de portfolio, rediriger vers les templates pour en créer un
+      this.router.navigate(['/templates']);
     }
   }
 

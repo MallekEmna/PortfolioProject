@@ -62,6 +62,9 @@ const PAGINATION = {
     MAX_LIMIT: 100
 };
 
+// Default user ID for single user mode
+const DEFAULT_USER_ID = '693453e12a3b85f45f4499d3';
+
 export {
     USER_ROLES,
     PROJECT_STATUS,
@@ -69,5 +72,6 @@ export {
     TEMPLATE_CATEGORIES,
     UPLOAD_LIMITS,
     MESSAGES,
-    PAGINATION
+    PAGINATION,
+    DEFAULT_USER_ID
 };

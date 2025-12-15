@@ -1,8 +1,13 @@
 import { Component, Input, OnInit, OnDestroy, signal, computed, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { TemplateService } from '../../../../services/template.service';
 import { UserService } from '../../../../services/user.service';
+import { PortfolioService } from '../../../../services/portfolio.service';
+import { ProjectService } from '../../../../services/project.service';
+import { PortfolioGeneratorService } from '../../../../services/portfolio-generator.service';
 import { Template } from '../../../../core/models/template.model';
 import { LucideIconsModule } from '../../../../icons';
 import { ProfileSidebarComponent } from '../../../profile/components/profile-sidebar/profile-sidebar';
@@ -28,6 +33,9 @@ export class TemplatesPage implements OnInit, OnDestroy {
         private templateService: TemplateService,
         public userService: UserService,
         private router: Router,
+        private portfolioService: PortfolioService,
+        private projectService: ProjectService,
+        private portfolioGenerator: PortfolioGeneratorService
     ) {
         // Utilisation de signaux pour la réactivité
         this.templates = toSignal(this.templateService.getTemplatesObservable(), {
@@ -57,7 +65,19 @@ export class TemplatesPage implements OnInit, OnDestroy {
 
     customize(id: string | undefined) {
         if (!id) return;
-        this.router.navigate(['/templates', id]);
+        
+        // Trouver le template dans la liste déjà chargée
+        const template = this.templates().find(t => t._id === id);
+        
+        if (template) {
+            // Passer le template via le state pour éviter le rechargement
+            this.router.navigate(['/templates', id], {
+                state: { template: template }
+            });
+        } else {
+            // Si le template n'est pas dans la liste, naviguer normalement
+            this.router.navigate(['/templates', id]);
+        }
     }
 
     selectTemplateForUse(id: string | undefined) {
@@ -70,22 +90,127 @@ export class TemplatesPage implements OnInit, OnDestroy {
         const selectedId = this.selectedId();
         if (!selectedId) return;
 
-        this.userService.updateTemplateSelection(selectedId).subscribe({
-            next: (_response: any) => {
-                // Rafraîchir les templates pour voir le changement
-                this.loadTemplates();
-                // Mettre à jour le signal utilisateur localement
-                this.userService.updateUserSignal({ templateSelected: selectedId });
+        this.isLoading.set(true);
 
-                this.templateService.selectForUse(null);
-                this.selectedId.set(null);
+        // Récupérer le template sélectionné
+        const selectedTemplate = this.templates().find(t => t._id === selectedId);
+        if (!selectedTemplate) {
+            this.showError('Template non trouvé');
+            this.isLoading.set(false);
+            return;
+        }
 
-                // Notification plus élégante
-                this.showSuccess('Template applied successfully! Portfolio generation started.');
+        // Récupérer les données utilisateur et projets en parallèle
+        const user = this.currentUser();
+        
+        const projects$ = this.projectService.getProjects().pipe(
+            map((response: any) => Array.isArray(response) ? response : (response?.data || [])),
+            catchError(() => of([]))
+        );
+        
+        const userProfile$ = user 
+            ? of(user)
+            : this.userService.getUserProfile().pipe(
+                map((response: any) => response?.data || response),
+                catchError(() => of(null))
+            );
+        
+        forkJoin({
+            projects: projects$,
+            userProfile: userProfile$
+        }).subscribe({
+            next: ({ projects, userProfile }) => {
+                // Préparer les données
+                const userData = userProfile;
+                const projectsList = projects;
+
+                // Générer le HTML du portfolio
+                const htmlContent = this.portfolioGenerator.generatePortfolioHTML(
+                    selectedTemplate,
+                    userData,
+                    projectsList
+                );
+
+                // Vérifier que le HTML est généré
+                if (!htmlContent || htmlContent.trim().length === 0) {
+                    this.showError('Erreur: Le HTML du portfolio n\'a pas pu être généré.');
+                    this.isLoading.set(false);
+                    return;
+                }
+
+                console.log('HTML Content generated, length:', htmlContent.length);
+
+                // Créer le portfolio
+                const portfolioData = {
+                    templateId: selectedId,
+                    htmlContent: htmlContent,
+                    title: `${userData?.username || 'Mon'} Portfolio`,
+                    description: `Portfolio généré avec le template ${selectedTemplate.name}`,
+                    userId: this.userService.getUserId()
+                };
+
+                console.log('Portfolio data to send:', {
+                    ...portfolioData,
+                    htmlContent: htmlContent.substring(0, 100) + '...' // Log only first 100 chars
+                });
+
+                // 1. Mettre à jour la sélection du template pour l'utilisateur (en parallèle avec la création du portfolio)
+                const updateTemplate$ = this.userService.updateTemplateSelection(selectedId).pipe(
+                    catchError((error) => {
+                        console.warn('Error updating template selection (non-blocking):', error);
+                        // Ne pas bloquer si la mise à jour du template échoue
+                        return of(null);
+                    })
+                );
+
+                // 2. Créer ou mettre à jour le portfolio
+                const createPortfolio$ = this.portfolioService.createPortfolio(portfolioData);
+
+                // Exécuter les deux opérations en parallèle
+                forkJoin({
+                    templateUpdate: updateTemplate$,
+                    portfolio: createPortfolio$
+                }).subscribe({
+                    next: ({ templateUpdate, portfolio: portfolioResponse }) => {
+                        const portfolio = portfolioResponse.data || portfolioResponse;
+                        
+                        // Rafraîchir les templates
+                        this.loadTemplates();
+                        
+                        // Mettre à jour le signal utilisateur
+                        if (templateUpdate) {
+                            this.userService.updateUserSignal({ templateSelected: selectedId });
+                        }
+
+                        this.templateService.selectForUse(null);
+                        this.selectedId.set(null);
+                        this.isLoading.set(false);
+
+                        // Notification de succès
+                        const isUpdate = portfolioResponse.status === 200 || portfolioResponse.status === 201;
+                        this.showSuccess(
+                            `Portfolio ${isUpdate ? 'mis à jour' : 'généré'} avec succès! ` +
+                            `URL publique: ${portfolio.publicUrl || 'N/A'}`
+                        );
+
+                        console.log('Portfolio créé/mis à jour:', portfolio);
+                        
+                        // Rediriger vers la page de visualisation du portfolio
+                        setTimeout(() => {
+                            this.router.navigate(['/portfolio', portfolio._id]);
+                        }, 1500);
+                    },
+                    error: (error: any) => {
+                        console.error('Error creating/updating portfolio:', error);
+                        this.isLoading.set(false);
+                        this.showError('Erreur lors de la création/mise à jour du portfolio.');
+                    }
+                });
             },
             error: (error: any) => {
-                console.error('Error applying template:', error);
-                this.showError('Failed to apply template. Please try again.');
+                console.error('Error loading data for portfolio generation:', error);
+                this.isLoading.set(false);
+                this.showError('Erreur lors du chargement des données. Veuillez réessayer.');
             }
         });
     }

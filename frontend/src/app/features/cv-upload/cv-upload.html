@@ -15,10 +15,44 @@
       </div>
     </div>
 
-    <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{{ errorMsg }}</div>
-    <div *ngIf="isLoading" class="p-3 rounded-lg bg-indigo-50 text-indigo-700 text-sm flex items-center gap-2">
+    <!-- Method Selection -->
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <label class="text-sm font-medium text-gray-700 mb-2 block">Extraction Method:</label>
+      <div class="flex flex-wrap gap-4">
+        <label class="flex items-center cursor-pointer">
+          <input type="radio" name="method" value="local" [(ngModel)]="parsingMethod" 
+                 class="mr-2 text-indigo-600 focus:ring-indigo-500">
+          <span class="text-sm text-gray-700">
+            <strong>Local</strong> (Fast, No API key)
+          </span>
+        </label>
+        <label class="flex items-center cursor-pointer">
+          <input type="radio" name="method" value="external" [(ngModel)]="parsingMethod"
+                 class="mr-2 text-indigo-600 focus:ring-indigo-500">
+          <span class="text-sm text-gray-700">
+            <strong>External API</strong> (Extracta, More accurate)
+          </span>
+        </label>
+        <label class="flex items-center cursor-pointer">
+          <input type="radio" name="method" value="ollama" [(ngModel)]="parsingMethod"
+                 class="mr-2 text-indigo-600 focus:ring-indigo-500">
+          <span class="text-sm text-gray-700">
+            <strong>Ollama LLM</strong> (Most accurate, Local AI)
+          </span>
+        </label>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">
+        <span *ngIf="parsingMethod === 'local'">Using local PDF parsing with pdfplumber. No API key required.</span>
+        <span *ngIf="parsingMethod === 'external'">Using Extracta API. Requires EXTRACTA_API_KEY configured on server.</span>
+        <span *ngIf="parsingMethod === 'ollama'">Using Ollama LLM for intelligent CV parsing. Requires Ollama to be running locally.</span>
+      </p>
+    </div>
+
+    <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200">{{ errorMsg }}</div>
+    <div *ngIf="successMsg" class="p-3 rounded-lg bg-green-50 text-green-700 text-sm border border-green-200">{{ successMsg }}</div>
+    <div *ngIf="isLoading" class="p-3 rounded-lg bg-indigo-50 text-indigo-700 text-sm flex items-center gap-2 border border-indigo-200">
       <span class="animate-spin inline-block w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></span>
-      Parsing your CV...
+      Parsing your CV... This may take a few moments.
     </div>
 
     <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -76,13 +110,117 @@
         <input formControlName="skillsSoft" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
       </div>
 
+      <!-- Experiences Section -->
+      <div class="md:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-800">Experiences</h3>
+          <button type="button" (click)="addExperience()" class="px-3 py-1 text-sm bg-indigo-500 text-white rounded hover:bg-indigo-600">
+            + Add Experience
+          </button>
+        </div>
+        <div formArrayName="experiences" class="space-y-4">
+          <div *ngFor="let exp of experiences.controls; let i = index" [formGroupName]="i" 
+               class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-medium text-gray-700">Experience {{ i + 1 }}</h4>
+              <button type="button" (click)="removeExperience(i)" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input formControlName="company" placeholder="Company" class="border rounded px-3 py-2">
+              <input formControlName="role" placeholder="Role/Position" class="border rounded px-3 py-2">
+              <input formControlName="start_date" placeholder="Start Date (YYYY-MM)" class="border rounded px-3 py-2">
+              <input formControlName="end_date" placeholder="End Date (YYYY-MM)" class="border rounded px-3 py-2">
+              <input formControlName="location" placeholder="Location" class="border rounded px-3 py-2 md:col-span-2">
+              <textarea formControlName="description" placeholder="Description" rows="3" 
+                        class="border rounded px-3 py-2 md:col-span-2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education Section -->
+      <div class="md:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-800">Education</h3>
+          <button type="button" (click)="addEducation()" class="px-3 py-1 text-sm bg-indigo-500 text-white rounded hover:bg-indigo-600">
+            + Add Education
+          </button>
+        </div>
+        <div formArrayName="educations" class="space-y-4">
+          <div *ngFor="let edu of educations.controls; let i = index" [formGroupName]="i" 
+               class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-medium text-gray-700">Education {{ i + 1 }}</h4>
+              <button type="button" (click)="removeEducation(i)" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input formControlName="school" placeholder="School/University" class="border rounded px-3 py-2">
+              <input formControlName="degree" placeholder="Degree" class="border rounded px-3 py-2">
+              <input formControlName="field" placeholder="Field of Study" class="border rounded px-3 py-2">
+              <input formControlName="start_date" placeholder="Start Date (YYYY-MM)" class="border rounded px-3 py-2">
+              <input formControlName="end_date" placeholder="End Date (YYYY-MM)" class="border rounded px-3 py-2">
+              <input formControlName="location" placeholder="Location" class="border rounded px-3 py-2">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Languages Section -->
+      <div class="md:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-800">Languages</h3>
+          <button type="button" (click)="addLanguage()" class="px-3 py-1 text-sm bg-indigo-500 text-white rounded hover:bg-indigo-600">
+            + Add Language
+          </button>
+        </div>
+        <div formArrayName="languages" class="space-y-3">
+          <div *ngFor="let lang of languages.controls; let i = index" [formGroupName]="i" 
+               class="flex gap-3 items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <input formControlName="name" placeholder="Language" class="flex-1 border rounded px-3 py-2">
+            <input formControlName="level" placeholder="Level (A1-C2)" class="w-32 border rounded px-3 py-2">
+            <button type="button" (click)="removeLanguage(i)" class="text-red-500 hover:text-red-700">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects Section -->
+      <div class="md:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-800">Projects</h3>
+          <button type="button" (click)="addProject()" class="px-3 py-1 text-sm bg-indigo-500 text-white rounded hover:bg-indigo-600">
+            + Add Project
+          </button>
+        </div>
+        <div formArrayName="projects" class="space-y-4">
+          <div *ngFor="let proj of projects.controls; let i = index" [formGroupName]="i" 
+               class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-medium text-gray-700">Project {{ i + 1 }}</h4>
+              <button type="button" (click)="removeProject(i)" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input formControlName="title" placeholder="Project Title *" class="border rounded px-3 py-2">
+              <input formControlName="companyName" placeholder="Company/Organization" class="border rounded px-3 py-2">
+              <input formControlName="category" placeholder="Category" class="border rounded px-3 py-2">
+              <input formControlName="duration" placeholder="Duration" class="border rounded px-3 py-2">
+              <input formControlName="techStack" placeholder="Tech Stack (comma separated)" class="border rounded px-3 py-2 md:col-span-2">
+              <input formControlName="linkDemo" placeholder="Demo Link" class="border rounded px-3 py-2">
+              <input formControlName="linkGithub" placeholder="GitHub Link" class="border rounded px-3 py-2">
+              <textarea formControlName="description" placeholder="Description *" rows="3" 
+                        class="border rounded px-3 py-2 md:col-span-2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="md:col-span-2 flex gap-3">
         <button type="button" (click)="submit()" [disabled]="isLoading"
                 class="px-5 py-2 bg-indigo-500 text-white rounded-lg shadow hover:bg-indigo-600 disabled:opacity-60">
-          Parse from PDF
+          Parse from PDF ({{ parsingMethod === 'ollama' ? 'Ollama LLM' : parsingMethod === 'external' ? 'External API' : 'Local' }})
         </button>
-        <button type="button" (click)="save()" class="px-5 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-gray-800">
-          Save
+        <button type="button" (click)="save()" [disabled]="isLoading"
+                class="px-5 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-gray-800 disabled:opacity-60">
+          Save to Database
         </button>
       </div>
     </form>

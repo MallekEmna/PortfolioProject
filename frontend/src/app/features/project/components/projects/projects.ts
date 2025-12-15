@@ -32,6 +32,7 @@ export class Projects implements OnInit {
   showEditModal = signal(false);
   selectedProject = signal<Project | null>(null);
   currentUser = computed(() => this.userService.getUserSignal()());
+  isDarkMode = signal<boolean>(false);
 
   constructor(
     private projectService: ProjectService, 
@@ -42,6 +43,29 @@ export class Projects implements OnInit {
 
   ngOnInit() {
     this.loadUserProjects();
+    // Charger le thème depuis localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkMode.set(true);
+      this.applyTheme(true);
+    } else {
+      this.applyTheme(false);
+    }
+  }
+
+  toggleTheme() {
+    this.isDarkMode.update(mode => !mode);
+    this.applyTheme(this.isDarkMode());
+    // Sauvegarder dans localStorage
+    localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+  }
+
+  private applyTheme(isDark: boolean) {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }
 
   private loadUserProjects() {

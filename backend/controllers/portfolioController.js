@@ -1,28 +1,58 @@
+import PortfolioService from '../services/portfolioService.js';
 import Portfolio from '../models/Portfolio.js';
-import { MESSAGES } from '../utils/constants.js';
-
-const DEFAULT_USER_ID = '693453e12a3b85f45f4499d3';
+import { MESSAGES, DEFAULT_USER_ID, PAGINATION } from '../utils/constants.js';
 
 /**
- * Get all portfolios for the default user
+ * Helper function to extract user ID from portfolio
+ * Handles both ObjectId and populated User object
+ */
+const getUserIdFromPortfolio = (portfolio) => {
+  if (!portfolio || !portfolio.userId) return null;
+  
+  if (typeof portfolio.userId === 'object' && portfolio.userId._id) {
+    // C'est un objet User après populate
+    return portfolio.userId._id.toString();
+  } else if (portfolio.userId.toString) {
+    // C'est un ObjectId
+    return portfolio.userId.toString();
+  } else {
+    return String(portfolio.userId);
+  }
+};
+
+/**
+ * Get all portfolios for the default user with pagination and filtering
  */
 export const getUserPortfolios = async (req, res) => {
   try {
-    const portfolios = await Portfolio.find({ userId: DEFAULT_USER_ID })
-      .populate('templateId', 'name category')
-      .populate('projects', 'title status')
-      .sort({ createdAt: -1 });
+    const { page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT, status } = req.query;
+    
+    const options = {
+      page: parseInt(page),
+      limit: Math.min(parseInt(limit), PAGINATION.MAX_LIMIT),
+      status
+    };
+
+    const portfolios = await PortfolioService.getUserPortfolios(DEFAULT_USER_ID, options);
+    const total = await Portfolio.countDocuments({ userId: DEFAULT_USER_ID, ...(status && { status }) });
 
     res.status(200).json({
       success: true,
       count: portfolios.length,
-      data: portfolios
+      data: portfolios,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Error fetching portfolios:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };
@@ -32,11 +62,20 @@ export const getUserPortfolios = async (req, res) => {
  */
 export const getPortfolioById = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id)
-      .populate('templateId', 'name category')
-      .populate('projects', 'title status');
+    const portfolio = await PortfolioService.getPortfolioById(req.params.id);
 
-    if (!portfolio || portfolio.userId.toString() !== DEFAULT_USER_ID) {
+    if (!portfolio) {
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.NOT_FOUND
+      });
+    }
+
+    // Vérifier l'appartenance au DEFAULT_USER_ID
+    const portfolioUserId = getUserIdFromPortfolio(portfolio);
+    const defaultUserId = DEFAULT_USER_ID.toString();
+
+    if (!portfolioUserId || portfolioUserId !== defaultUserId) {
       return res.status(404).json({
         success: false,
         message: MESSAGES.NOT_FOUND
@@ -51,7 +90,8 @@ export const getPortfolioById = async (req, res) => {
     console.error('Error fetching portfolio:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };
@@ -66,17 +106,19 @@ export const createPortfolio = async (req, res) => {
       userId: DEFAULT_USER_ID
     };
 
-    const portfolio = await Portfolio.create(portfolioData);
+    const portfolio = await PortfolioService.createPortfolio(portfolioData);
 
     res.status(201).json({
       success: true,
+      message: MESSAGES.PORTFOLIO_CREATED,
       data: portfolio
     });
   } catch (error) {
     console.error('Error creating portfolio:', error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.VALIDATION_ERROR,
+      error: error.message
     });
   }
 };
@@ -86,30 +128,38 @@ export const createPortfolio = async (req, res) => {
  */
 export const updatePortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id);
+    const portfolio = await PortfolioService.getPortfolioById(req.params.id);
 
-    if (!portfolio || portfolio.userId.toString() !== DEFAULT_USER_ID) {
+    if (!portfolio) {
       return res.status(404).json({
         success: false,
         message: MESSAGES.NOT_FOUND
       });
     }
 
-    const updatedPortfolio = await Portfolio.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const portfolioUserId = getUserIdFromPortfolio(portfolio);
+    const defaultUserId = DEFAULT_USER_ID.toString();
+
+    if (!portfolioUserId || portfolioUserId !== defaultUserId) {
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.NOT_FOUND
+      });
+    }
+
+    const updatedPortfolio = await PortfolioService.updatePortfolio(req.params.id, req.body);
 
     res.status(200).json({
       success: true,
+      message: MESSAGES.PORTFOLIO_UPDATED,
       data: updatedPortfolio
     });
   } catch (error) {
     console.error('Error updating portfolio:', error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.VALIDATION_ERROR,
+      error: error.message
     });
   }
 };
@@ -119,26 +169,45 @@ export const updatePortfolio = async (req, res) => {
  */
 export const deletePortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id);
+    const portfolio = await PortfolioService.getPortfolioById(req.params.id);
 
-    if (!portfolio || portfolio.userId.toString() !== DEFAULT_USER_ID) {
+    if (!portfolio) {
       return res.status(404).json({
         success: false,
         message: MESSAGES.NOT_FOUND
       });
     }
 
-    await portfolio.remove();
+    const portfolioUserId = getUserIdFromPortfolio(portfolio);
+    const defaultUserId = DEFAULT_USER_ID.toString();
+
+    if (!portfolioUserId || portfolioUserId !== defaultUserId) {
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.NOT_FOUND
+      });
+    }
+
+    const deleted = await PortfolioService.deletePortfolio(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.NOT_FOUND
+      });
+    }
 
     res.status(200).json({
       success: true,
+      message: 'Portfolio supprimé avec succès',
       data: {}
     });
   } catch (error) {
     console.error('Error deleting portfolio:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };
@@ -148,27 +217,38 @@ export const deletePortfolio = async (req, res) => {
  */
 export const publishPortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id);
+    const portfolio = await PortfolioService.getPortfolioById(req.params.id);
 
-    if (!portfolio || portfolio.userId.toString() !== DEFAULT_USER_ID) {
+    if (!portfolio) {
       return res.status(404).json({
         success: false,
         message: MESSAGES.NOT_FOUND
       });
     }
 
-    portfolio.isPublished = true;
-    await portfolio.save();
+    const portfolioUserId = getUserIdFromPortfolio(portfolio);
+    const defaultUserId = DEFAULT_USER_ID.toString();
+
+    if (!portfolioUserId || portfolioUserId !== defaultUserId) {
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.NOT_FOUND
+      });
+    }
+
+    const publishedPortfolio = await PortfolioService.publishPortfolio(req.params.id);
 
     res.status(200).json({
       success: true,
-      data: portfolio
+      message: MESSAGES.PORTFOLIO_PUBLISHED,
+      data: publishedPortfolio
     });
   } catch (error) {
     console.error('Error publishing portfolio:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };
@@ -178,9 +258,8 @@ export const publishPortfolio = async (req, res) => {
  */
 export const getMyPortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findOne({ userId: DEFAULT_USER_ID })
-      .populate('templateId', 'name category')
-      .populate('projects', 'title status');
+    const portfolios = await PortfolioService.getUserPortfolios(DEFAULT_USER_ID, { limit: 1 });
+    const portfolio = portfolios[0];
 
     if (!portfolio) {
       return res.status(404).json({
@@ -197,7 +276,8 @@ export const getMyPortfolio = async (req, res) => {
     console.error('Error fetching my portfolio:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };
@@ -207,21 +287,33 @@ export const getMyPortfolio = async (req, res) => {
  */
 export const getPortfolios = async (req, res) => {
   try {
-    const portfolios = await Portfolio.find({ isPublished: true })
-      .populate('templateId', 'name category')
-      .populate('projects', 'title status')
-      .sort({ createdAt: -1 });
+    const { page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT } = req.query;
+    
+    const options = {
+      page: parseInt(page),
+      limit: Math.min(parseInt(limit), PAGINATION.MAX_LIMIT)
+    };
+
+    const portfolios = await PortfolioService.getPublishedPortfolios(options);
+    const total = await Portfolio.countDocuments({ isPublished: true });
 
     res.status(200).json({
       success: true,
       count: portfolios.length,
-      data: portfolios
+      data: portfolios,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Error fetching published portfolios:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.SERVER_ERROR
+      message: MESSAGES.SERVER_ERROR,
+      error: error.message
     });
   }
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUser, updateUser, upload } from '../controllers/userController.js';
+import { getUser, updateUser, upload, updateTemplateSelection } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -123,5 +123,35 @@ router.put('/upload/:id', upload.single('profileImage'), async (req, res) => {
         res.status(500).json({ msg: 'Server error' });
     }
 });
+
+/**
+ * @swagger
+ * /api/users/{id}/template:
+ *   put:
+ *     summary: Update user template selection
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               templateSelected:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Template selection updated successfully
+ *       404:
+ *         description: User not found
+ */
+router.put('/:id/template', updateTemplateSelection);
 
 export default router;

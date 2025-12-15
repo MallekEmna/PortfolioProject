@@ -6,3 +6,5 @@ Pillow
 python-multipart
 pytest
 pytest-asyncio
+python-dotenv
+requests

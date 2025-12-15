@@ -1,4 +1,4 @@
-<div class="min-h-screen flex gap-6 bg-gradient-to-br from-gray-50 to-gray-100">
+<div class="min-h-screen flex gap-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 
     <app-profile-sidebar [user]="currentUser()" class="w-64 flex-shrink-0"></app-profile-sidebar>
 
@@ -6,25 +6,42 @@
 
         <!-- Hero / Header -->
         <div
-            class="bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-lg p-6 border border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            class="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <div
-                    class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold mb-2">
+                    class="inline-block px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-semibold mb-2">
                     Projects Dashboard
                 </div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Manage your work</h1>
-                <p class="text-gray-600 text-sm mt-2">Edit, add, and showcase your best projects.</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Manage your work</h1>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">Edit, add, and showcase your best projects.</p>
             </div>
-            <button (click)="addNewProject()"
-                class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-lg transition flex items-center gap-2">
-                <span class="text-lg">＋</span> Add New Project
-            </button>
+            <div class="flex items-center gap-3">
+                <!-- Toggle Dark/Light Mode -->
+                <button (click)="toggleTheme()"
+                    class="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl shadow transition flex items-center gap-2">
+                    @if (isDarkMode()) {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span>Light</span>
+                    } @else {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                        <span>Dark</span>
+                    }
+                </button>
+                <button (click)="addNewProject()"
+                    class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-lg transition flex items-center gap-2">
+                    <span class="text-lg">＋</span> Add New Project
+                </button>
+            </div>
         </div>
 
         <!-- MODAL AJOUT -->
         <div *ngIf="showAddForm()"
             class="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl relative p-6 border border-gray-200">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xl relative p-6 border border-gray-200 dark:border-gray-700">
                 <button (click)="closeAddModal()"
                     class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl">
                     ✕
